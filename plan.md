@@ -93,7 +93,7 @@ Expand a task with this template when you start it (in this file under §22, or 
 **Edge cases:** empty response; truncated JSON; extra fields; provider rate limit; very large context (F8 trims first).
 **Acceptance criteria:** valid output returned as a typed object; invalid output repaired or a typed error raised; every call logged.
 **Testing:** unit tests with a fake provider returning valid, invalid-then-valid, always-invalid, and timeout responses.
-**Status:** [ ]
+**Status:** [x] Phase 1, 2026-09-24. Uses `generateText` + `Output.object` (ADR-011). Timeout test not automated (needs a 30 s wait); the other cases are covered in `src/lib/ai/llm.test.ts`. The `workflow_runs` write happens in callers via `recordRun` (agents stay pure).
 
 ---
 
@@ -435,6 +435,8 @@ Every agent works from this shared, structured context. The Zod schema in `src/l
 - Only confirmed user decisions and validated agent outputs are written to context.
 - Every write records provenance so the product can explain *why* and detect stale dependents.
 - Every write increments `brand_context.version` (optimistic concurrency, §18.3).
+
+> Added 2026-09-24 (ADR-009): in the Zod schema, `meta.confidence` is an array of `{ path, level: "low"|"medium"|"high" }` and `provenance` is an array of `{ path, source, agent, run_id, decision_id, derived_from }`. OpenAI strict mode rejects open-keyed maps, so the JSON above is the logical shape and the arrays are the stored shape. `visual.colors` is `{ name, hex, role }[]`, `visual.typography` is `{ role, family, rationale }[]`, `launch.social_posts` is `{ platform, text }[]`, and `selected_direction` is `{ name, source_module, summary, run_id } | null`.
 
 ---
 
@@ -860,7 +862,9 @@ NEXT_PUBLIC_APP_URL=
 DEMO_MODE=0
 RATE_LIMIT_PER_MIN=20
 DAILY_AI_CALLS_PER_PROJECT=200
+OPENAI_OMIT_TEMPERATURE=0    # set to 1 if the chosen models reject `temperature`
 ```
+> Added 2026-09-24: `OPENAI_OMIT_TEMPERATURE` lets the same prompts run on reasoning models that reject `temperature` (§20.2). `SESSION_SECRET` must be at least 32 characters, or the guest cookie is not issued and `/api/health` reports it missing.
 
 ### 20.4 Commands
 ```bash
@@ -913,21 +917,21 @@ pnpm record:demo  # save a good live run to src/demo/recorded-run.json
 
 ## 22. Implementation task tree
 
-All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are marked (new).
+All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are marked (new). Tasks without a marker are `[ ]`. Phase 1 progress is summarised in §22.1 "Status".
 
-**A. Project foundation:** A1 Repository setup · A2 Development environment · A3 Environment variables · A4 Base frontend · A5 Base backend · A6 Database connection · A7 Database migrations · A8 Logging · A9 Error handling · A10 CI pipeline (lint, test, E2E) (new) · A11 package.json scripts (new) · A12 Seed demo project (new)
+**A. Project foundation:** [x] A1 Repository setup · [x] A2 Development environment · [x] A3 Environment variables · [x] A4 Base frontend · [x] A5 Base backend · [~] A6 Database connection · A7 Database migrations · [~] A8 Logging · [x] A9 Error handling · A10 CI pipeline (lint, test, E2E) (new) · [x] A11 package.json scripts (new) · A12 Seed demo project (new)
 
-**B. Authentication:** B1 Registration · B2 Login · B3 Logout · B4 Session persistence · B5 Protected routes · B6 User/project authorization · B7 Guest mode + "save my work" (new)
+**B. Authentication:** B1 Registration · B2 Login · B3 Logout · B4 Session persistence · B5 Protected routes · B6 User/project authorization · [~] B7 Guest mode + "save my work" (new)
 
 **C. Project management:** C1 Create · C2 List · C3 Open · C4 Rename · C5 Delete/archive · C6 Save project state · C7 Project dashboard
 
-**D. Stage selection:** D1 Stage selector UI · D2 Stage descriptions · D3 Stage selection state · D4 Project initialization · D5 Initial AI context · D6 Stage D bootstrap flow (new)
+**D. Stage selection:** [~] D1 Stage selector UI · [x] D2 Stage descriptions · D3 Stage selection state · D4 Project initialization · D5 Initial AI context · D6 Stage D bootstrap flow (new)
 
 **E. Workspace:** E1 Layout · E2 Workflow sidebar · E3 AI conversation · E4 Brand Context panel · E5 Decision cards · E6 Result cards · E7 Loading states · E8 Error states · E9 Responsive workspace · E10 Streaming client hook (new) · E11 "How the AI worked" drawer (new) · E12 Empty states (new)
 
-**F. AI foundation:** F1 LLM provider abstraction · F2 AI request service · F3 Prompt registry · F4 Structured output parser · F5 Schema validation · F6 Retry mechanism · F7 Error handling · F8 Token/context management · F9 AI logging · F10 Critic/evaluator service (new) · F11 Eval harness (new)
+**F. AI foundation:** [x] F1 LLM provider abstraction · [x] F2 AI request service · [~] F3 Prompt registry · [x] F4 Structured output parser · [x] F5 Schema validation · [x] F6 Retry mechanism · [x] F7 Error handling · F8 Token/context management · [~] F9 AI logging · F10 Critic/evaluator service (new) · F11 Eval harness (new)
 
-**G. Brand Context:** G1 Schema · G2 Storage · G3 Retrieval · G4 Updates · G5 Versioning · G6 Locked decisions · G7 Display · G8 Provenance & stale detection (new) · G9 Optimistic concurrency (new)
+**G. Brand Context:** [x] G1 Schema · [~] G2 Storage · [~] G3 Retrieval · [~] G4 Updates · [~] G5 Versioning · G6 Locked decisions · G7 Display · G8 Provenance & stale detection (new) · [~] G9 Optimistic concurrency (new)
 
 **H. Brand Interviewer:** H1 Prompt · H2 Question generation · H3 Answer extraction · H4 Missing-info detection · H5 Assumption detection · H6 Completion detection · H7 API · H8 UI (with suggested-answer chips) · H9 Context integration · H10 Testing · H11 Content-policy check (new)
 
@@ -965,7 +969,7 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 
 **Y. Observability:** Y1 Structured logs + request IDs · Y2 Error tracking · Y3 Run metrics views · Y4 Workflow completion tracking (all new, detailing §19)
 
-**Z. Deployment:** Z1 Vercel project + GitHub deploys · Z2 Frontend deploy · Z3 Neon production DB + `db:push` · Z4 Env + CORS config · Z5 Health check · Z6 Seed demo in production · Z7 Demo mode replay (new)
+**Z. Deployment:** Z1 Vercel project + GitHub deploys · Z2 Frontend deploy · Z3 Neon production DB + `db:push` · Z4 Env + CORS config · [~] Z5 Health check · Z6 Seed demo in production · Z7 Demo mode replay (new)
 
 **SUB. Submission (new):** SUB1 README (problem, workflow diagram, agents, eval table, setup, disclosure of reused code/AI tools) · SUB2 Public repo check · SUB3 Demo video · SUB4 Final acceptance run on production
 
@@ -999,6 +1003,30 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 **Post-hackathon:** full 5-agent Brand Battle, AI-proposed plans + validator + re-planning (I2, I4, I7–I13), 2-round revision loop, 5 worlds, eval harness (F11), demo-mode replay (Z7), share links (U5), version history UI (P14–P15), Stage D draft-system extraction (D6, J12), accounts (B1–B6), files/websites (S), image generation (T8), PDF (U3), broad tests.
 
 **Tests kept:** lexicon detection, lock enforcement, schema validation of each agent output (fake model), owner scoping. Run the demo path by hand before every push to `main`.
+
+#### Status
+
+> Added 2026-09-24: Phase 1 (Foundation) code complete. Checkpoint still open: one structured OpenAI call working **in production** needs the founder's OpenAI key, a Neon database and a Vercel project (manual steps).
+
+| Task | Status | Notes |
+|---|---|---|
+| A1–A5, A11 | [x] | Next.js 16.3 + TS strict + Tailwind 4 + shadcn/ui (Radix base), pnpm 12, scripts per §20.4 (`eval`, `record:demo` deferred) |
+| A6 | [~] | Drizzle schema, Neon HTTP client, owner-scoped queries. Not yet run against a real database: needs `DATABASE_URL` + `pnpm db:push` |
+| A8 | [~] | Structured JSON logs with `request_id` (`services/log.ts`); no Sentry |
+| A9 | [x] | `schemas/errors.ts` (§18.5 codes, `AppError`, `toErrorResponse`) + `services/route.ts` `withErrors` |
+| A12 | [ ] | `pnpm seed:demo` is a placeholder (Phase 8) |
+| B7 (guest part) | [~] | Signed `gg_uid` cookie via `src/proxy.ts` + `getOwnerId()`; "save my work" is post-hackathon |
+| D1, D2 | [~] / [x] | Landing hero + four stage cards; selection shows a toast until Phase 2 wires D3–D5 |
+| F1, F2, F4–F7 | [x] | `ai/llm.ts` `generateStructured`: Zod re-validation, 1 repair retry, 2 backoff retries on 429/5xx/network, per-tier timeouts, typed errors |
+| F3 | [~] | Registry pattern established with `prompts/ping.ts`; agent prompts come with each agent |
+| F8 | [ ] | Context slicing (`context-manager`) is Phase 2 |
+| F9 | [~] | `LlmTrace` returned by every call (also on failure via `AiCallError.trace`); `recordRun()` persists it. Routes start calling it in Phase 2 |
+| G1 | [x] | `schemas/brand-context.ts` + `emptyBrandContext()`; strict-mode compatibility is unit-tested |
+| G2–G5, G9 | [~] | Append-only versions, `saveContext` with expected version → `CONFLICT`. Untested against a real DB |
+| Z5 | [~] | `GET /api/health` (env presence, DB ping, `?ai=1` structured ping). Verified locally without credentials only |
+| Z1–Z3 | [ ] | Founder: create Vercel project, add Neon, set env vars, `db:push` |
+
+Tests: 31 passing (`llm.ts` with the AI SDK mock model, session sign/verify/tamper, error-leak checks, strict-mode schema checks).
 
 #### Schedule
 
@@ -1158,6 +1186,10 @@ Record architectural decisions here (see `CLAUDE.md`). Format: **ID · Date · D
 | ADR-006 | 2026-09-24 | Next.js full-stack TypeScript on Vercel + Neon Postgres + Drizzle + OpenAI via Vercel AI SDK (§20.1). Replaces FastAPI + React | One language and one deploy; saves hours of setup and type syncing. Impact: `backend/`/`frontend/` layouts in the original plan map to `src/lib` and `src/app` (§18.1) | Accepted |
 | ADR-007 | 2026-09-24 | Hackathon scope and schedule (§22.1) | 36-hour limit; protect the live demo path | Accepted |
 | ADR-008 | 2026-09-24 | Solo scope: Brand Battle Lite (2 calls), 3 worlds, 1 revision round, orchestrator lite (default plans + AI reasons), Stage D lite; eval harness, replay and share links deferred | One builder, ~1 day left. Battle is kept because it's the strongest signal for the AI-workflow and originality criteria; its cost was call count, not model strength | Accepted |
+| ADR-009 | 2026-09-24 | Brand Context `meta.confidence` and `provenance` are arrays of `{ path, ... }` entries, not maps keyed by field path (§12). **Alternative:** `z.record`. **Impact:** readers look entries up by `path`; no migration (no data yet) | OpenAI strict structured outputs (on by default in `@ai-sdk/openai`) reject open records; a unit test enforces strict compatibility | Accepted |
+| ADR-010 | 2026-09-24 | Guest cookie is set in `src/proxy.ts` (Node runtime), not `src/middleware.ts` (edge). **Alternative:** deprecated `middleware.ts`. **Impact:** none functionally; signing uses Web Crypto and still works on edge | Next.js 16 deprecated `middleware.ts` and renamed it Proxy; Proxy always runs on Node.js | Accepted |
+| ADR-011 | 2026-09-24 | `llm.ts` uses AI SDK 7 `generateText` + `Output.object({ schema })` instead of `generateObject` (§20.1, F2). **Impact:** same behavior (JSON schema response format, `NoObjectGeneratedError` on invalid output); retries handled in `llm.ts` with `maxRetries: 0` so the trace's retry count is exact | `generateObject` is marked deprecated in the installed AI SDK 7 | Accepted |
+| ADR-012 | 2026-09-24 | A timed-out model call is not retried (fast 30 s, primary 60 s per attempt); invalid output gets 1 repair retry, 429/5xx/network errors get 2 backoff retries | A second attempt after a timeout would exceed the route's `maxDuration` on Vercel | Accepted |
 
 
 ## 28. Open questions
