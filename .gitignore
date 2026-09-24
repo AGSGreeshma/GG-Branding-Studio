@@ -141,3 +141,12 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# --- Next.js / project additions ---
+/.next/
+next-env.d.ts
+.vercel
+*.pem
+.pnpm-debug.log*
+# local env files (only .env.example is committed)
+.env*.local
