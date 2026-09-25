@@ -11,6 +11,7 @@ import {
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import type { BrandContext } from "../schemas/brand-context";
+import { INTERVIEW_ROLES } from "../schemas/interview";
 import {
   BRAND_STATES,
   ENTRY_STAGES,
@@ -104,6 +105,30 @@ export const workflowRuns = pgTable(
   ],
 );
 
+/**
+ * Interview conversation history (H3, plan §14.1). The Brand Context holds the
+ * extracted facts; this table holds the turns they came from, so the workspace
+ * can replay the interview and the trace can show what was asked and why.
+ */
+export const interviewTurns = pgTable(
+  "interview_turns",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    role: text("role", { enum: INTERVIEW_ROLES }).notNull(),
+    content: text("content").notNull(),
+    /** "Why I'm asking" for assistant turns; null for user answers. */
+    questionReason: text("question_reason"),
+    /** Tappable answer chips offered with an assistant question. */
+    suggestedAnswersJson: jsonb("suggested_answers_json").$type<string[]>(),
+    runId: uuid("run_id").references((): AnyPgColumn => workflowRuns.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("interview_turns_project_idx").on(t.projectId, t.createdAt)],
+);
+
 export const decisions = pgTable(
   "decisions",
   {
@@ -186,3 +211,4 @@ export type BrandContextRow = typeof brandContext.$inferSelect;
 export type WorkflowRun = typeof workflowRuns.$inferSelect;
 export type NewWorkflowRun = typeof workflowRuns.$inferInsert;
 export type DecisionRow = typeof decisions.$inferSelect;
+export type InterviewTurnRow = typeof interviewTurns.$inferSelect;

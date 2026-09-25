@@ -7,14 +7,26 @@ import {
   type BrandContext,
 } from "@/lib/schemas/brand-context";
 import { AppError } from "@/lib/schemas/errors";
-import type { CreateProjectInput } from "@/lib/schemas/project";
+import type { InterviewRole, InterviewTurn } from "@/lib/schemas/interview";
+import { DEFAULT_PROJECT_NAME, type CreateProjectInput } from "@/lib/schemas/project";
 import {
   ENTRY_STAGE_TO_BRAND_STATE,
   type ModuleName,
+  type WorkflowPlan,
   type WorkflowState,
 } from "@/lib/schemas/workflow";
+import { defaultPlanFor } from "@/lib/services/workflow-engine";
 import { getDb } from "./client";
-import { brandContext, projects, workflowRuns, type Project, type RunStatus } from "./schema";
+import {
+  brandContext,
+  decisions,
+  interviewTurns,
+  projects,
+  workflowRuns,
+  type InterviewTurnRow,
+  type Project,
+  type RunStatus,
+} from "./schema";
 
 /*
  * Owner scoping: every project lookup goes through getProject(ownerId, id).
@@ -40,15 +52,19 @@ export interface ContextSnapshot {
   version: number;
 }
 
-/** Creates the project and its version-1 Brand Context in one transaction (plan §8). */
+/**
+ * Creates the project, its version-1 Brand Context and the default workflow
+ * plan for the entry stage (plan §8, §7.5) in one batch.
+ */
 export async function createProject(
   ownerId: string,
   input: CreateProjectInput,
 ): Promise<{ project: Project } & ContextSnapshot> {
   const db = getDb();
   const id = crypto.randomUUID();
+  const name = input.name ?? DEFAULT_PROJECT_NAME[input.entry_stage];
   const context = emptyBrandContext({
-    name: input.name,
+    name: input.name ?? "",
     description: input.description,
     stage: input.entry_stage,
   });
@@ -59,11 +75,12 @@ export async function createProject(
       .values({
         id,
         ownerId,
-        name: input.name,
+        name,
         entryStage: input.entry_stage,
         brandState: ENTRY_STAGE_TO_BRAND_STATE[input.entry_stage],
         status: "active",
-        workflowState: "INITIAL",
+        workflowState: "DISCOVERY",
+        currentPlanJson: defaultPlanFor(input.entry_stage),
       })
       .returning(),
     db.insert(brandContext).values({ projectId: id, contextJson: context, version: 1 }),
@@ -72,6 +89,16 @@ export async function createProject(
   const project = insertedProjects[0];
   if (!project) throw new AppError("INTERNAL", { message: "Project insert returned no row" });
   return { project, context, version: 1 };
+}
+
+/** The owner's projects, newest first (C2). */
+export async function listProjects(ownerId: string, limit = 12): Promise<Project[]> {
+  return getDb()
+    .select()
+    .from(projects)
+    .where(and(eq(projects.ownerId, ownerId), eq(projects.status, "active")))
+    .orderBy(desc(projects.updatedAt))
+    .limit(limit);
 }
 
 /** Returns the project only if `ownerId` owns it. Anything else is NOT_FOUND, so IDs cannot be probed. */
@@ -202,6 +229,74 @@ export async function recordRun(input: RecordRunInput): Promise<string> {
   const id = rows[0]?.id;
   if (!id) throw new AppError("INTERNAL", { message: "workflow_runs insert returned no row" });
   return id;
+}
+
+/** Stores a new workflow state and/or plan. Call getProject(ownerId, id) first. */
+export async function updateProjectWorkflow(
+  projectId: string,
+  update: { workflowState?: WorkflowState; plan?: WorkflowPlan; name?: string },
+): Promise<void> {
+  const values: Record<string, unknown> = { updatedAt: new Date() };
+  if (update.workflowState) values.workflowState = update.workflowState;
+  if (update.plan) values.currentPlanJson = update.plan;
+  if (update.name) values.name = update.name;
+  await getDb().update(projects).set(values).where(eq(projects.id, projectId));
+}
+
+/** Locked Brand Context paths. No agent output may modify these (plan §11.2). */
+export async function getLockedPaths(projectId: string): Promise<string[]> {
+  const rows = await getDb()
+    .select({ path: decisions.path })
+    .from(decisions)
+    .where(and(eq(decisions.projectId, projectId), eq(decisions.locked, true)));
+  return rows.map((row) => row.path);
+}
+
+function toInterviewTurn(row: InterviewTurnRow): InterviewTurn {
+  return {
+    id: row.id,
+    role: row.role,
+    content: row.content,
+    question_reason: row.questionReason,
+    suggested_answers: row.suggestedAnswersJson ?? [],
+    created_at: row.createdAt.toISOString(),
+  };
+}
+
+/** The interview so far, oldest first. Call getProject(ownerId, id) first. */
+export async function listInterviewTurns(projectId: string): Promise<InterviewTurn[]> {
+  const rows = await getDb()
+    .select()
+    .from(interviewTurns)
+    .where(eq(interviewTurns.projectId, projectId))
+    .orderBy(interviewTurns.createdAt, interviewTurns.id);
+  return rows.map(toInterviewTurn);
+}
+
+export interface NewInterviewTurn {
+  projectId: string;
+  role: InterviewRole;
+  content: string;
+  questionReason?: string | null;
+  suggestedAnswers?: string[];
+  runId?: string | null;
+}
+
+export async function addInterviewTurn(input: NewInterviewTurn): Promise<InterviewTurn> {
+  const rows = await getDb()
+    .insert(interviewTurns)
+    .values({
+      projectId: input.projectId,
+      role: input.role,
+      content: input.content,
+      questionReason: input.questionReason ?? null,
+      suggestedAnswersJson: input.suggestedAnswers ?? null,
+      runId: input.runId ?? null,
+    })
+    .returning();
+  const row = rows[0];
+  if (!row) throw new AppError("INTERNAL", { message: "interview_turns insert returned no row" });
+  return toInterviewTurn(row);
 }
 
 /** Round trip to Postgres for /api/health. Returns latency in ms; throws if unreachable. */

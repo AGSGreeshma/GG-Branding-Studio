@@ -1,4 +1,5 @@
 import { StageSelector } from "@/components/stage-selector";
+import { YourProjects } from "@/components/your-projects";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { HOW_IT_WORKS } from "@/lib/stages";
 
@@ -53,6 +54,8 @@ export default function Home() {
           </div>
           <StageSelector />
         </section>
+
+        <YourProjects />
 
         <section aria-labelledby="how-title" className="border-t border-border py-12 sm:py-16">
           <h2

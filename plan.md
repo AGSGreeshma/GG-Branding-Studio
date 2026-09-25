@@ -292,6 +292,8 @@ Its plan and reasons are stored and shown in the Workflow Sidebar.
 ### 7.4 Interview completion rule
 > Added: the Interviewer ends when `confidence ≥ 0.7` for problem, primary audience and product description, **or** after 6 questions, **or** when the user clicks "That's enough, continue." Low-confidence fields are carried forward as explicit assumptions shown in the Brand Context panel.
 
+> Added 2026-09-25 (ADR-014): confidence is stored as levels, not numbers (ADR-009), so the threshold reads `low = 0.2`, `medium = 0.5`, `high = 0.9`: in practice all three fields must be `high`. The rule lives in `services/interview.ts` (`decideCompletion`) and is decided in code, never by the model; the route discards a question the model produced in the same call if the interview has just ended.
+
 ### 7.5 Default plans (fallbacks and examples)
 ```
 Idea (A):     Interviewer → Audience Shifter → Brand Battle → Five Worlds
@@ -507,6 +509,8 @@ Adaptive, not a fixed list of 20 questions.
 ```
 > Added: `question_reason` (shown as "why I'm asking") and `suggested_answers` (tappable chips) make the interview faster and more transparent.
 
+> Added 2026-09-25: the real output also carries `refusal` (a polite decline instead of a question when the idea is clearly illegal or harmful, H11) and `extracted_updates`: `{ path, values[], evidence }[]`, where `path` is an **enum of the thirteen Brand Context paths the Interviewer may write** (project, problem, audience, product) and `evidence` holds the user's own words behind the update. Without it the agent could only ask questions, never fill the context. `values` is always a list — a single entry for text fields — because OpenAI strict schemas reject unions. `confidence` follows the ADR-009 array shape. Suggested-answer counts (2–4) are clamped in code: strict mode ignores array length keywords.
+
 **User benefit:** no branding expertise needed.
 
 ### 14.2 Brand Doctor
@@ -704,6 +708,7 @@ Brand System
 > - `decisions`: `path` (context field path), `superseded_by`, `run_id`.
 > - `brand_system`: `change_summary`, `diff_json`.
 > - `sources` (new): id, project_id, kind (`paste|file|url`), title, content_text, storage_key, created_at — for §14.11 source tracking.
+> - `interview_turns` (new, 2026-09-25, ADR-013): id, project_id, role (`assistant|user`), content, question_reason, suggested_answers_json, run_id, created_at. The Brand Context stores the extracted facts; this table stores the conversation they came from, so the interview can be replayed and each question linked to the run that produced it.
 > - Indexes on `project_id` everywhere; unique `(project_id, version)` on versioned tables. Deleting a project cascades to all its rows.
 
 ---
@@ -919,23 +924,23 @@ pnpm record:demo  # save a good live run to src/demo/recorded-run.json
 
 All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are marked (new). Tasks without a marker are `[ ]`. Phase 1 progress is summarised in §22.1 "Status".
 
-**A. Project foundation:** [x] A1 Repository setup · [x] A2 Development environment · [x] A3 Environment variables · [x] A4 Base frontend · [x] A5 Base backend · [~] A6 Database connection · A7 Database migrations · [~] A8 Logging · [x] A9 Error handling · A10 CI pipeline (lint, test, E2E) (new) · [x] A11 package.json scripts (new) · A12 Seed demo project (new)
+**A. Project foundation:** [x] A1 Repository setup · [x] A2 Development environment · [x] A3 Environment variables · [x] A4 Base frontend · [x] A5 Base backend · [x] A6 Database connection · A7 Database migrations · [~] A8 Logging · [x] A9 Error handling · A10 CI pipeline (lint, test, E2E) (new) · [x] A11 package.json scripts (new) · A12 Seed demo project (new)
 
 **B. Authentication:** B1 Registration · B2 Login · B3 Logout · B4 Session persistence · B5 Protected routes · B6 User/project authorization · [~] B7 Guest mode + "save my work" (new)
 
-**C. Project management:** C1 Create · C2 List · C3 Open · C4 Rename · C5 Delete/archive · C6 Save project state · C7 Project dashboard
+**C. Project management:** [x] C1 Create · [x] C2 List · [x] C3 Open · C4 Rename (auto-named from the interview; manual rename post-hackathon) · C5 Delete/archive · [x] C6 Save project state · C7 Project dashboard
 
-**D. Stage selection:** [~] D1 Stage selector UI · [x] D2 Stage descriptions · D3 Stage selection state · D4 Project initialization · D5 Initial AI context · D6 Stage D bootstrap flow (new)
+**D. Stage selection:** [x] D1 Stage selector UI · [x] D2 Stage descriptions · [x] D3 Stage selection state · [x] D4 Project initialization · [x] D5 Initial AI context · D6 Stage D bootstrap flow (new)
 
-**E. Workspace:** E1 Layout · E2 Workflow sidebar · E3 AI conversation · E4 Brand Context panel · E5 Decision cards · E6 Result cards · E7 Loading states · E8 Error states · E9 Responsive workspace · E10 Streaming client hook (new) · E11 "How the AI worked" drawer (new) · E12 Empty states (new)
+**E. Workspace:** [x] E1 Layout · [x] E2 Workflow sidebar · [x] E3 AI conversation (interview cards) · [x] E4 Brand Context panel · E5 Decision cards · E6 Result cards · [x] E7 Loading states · [x] E8 Error states · [x] E9 Responsive workspace · E10 Streaming client hook (new) · E11 "How the AI worked" drawer (new) · [x] E12 Empty states (new)
 
-**F. AI foundation:** [x] F1 LLM provider abstraction · [x] F2 AI request service · [~] F3 Prompt registry · [x] F4 Structured output parser · [x] F5 Schema validation · [x] F6 Retry mechanism · [x] F7 Error handling · F8 Token/context management · [~] F9 AI logging · F10 Critic/evaluator service (new) · F11 Eval harness (new)
+**F. AI foundation:** [x] F1 LLM provider abstraction · [x] F2 AI request service · [x] F3 Prompt registry · [x] F4 Structured output parser · [x] F5 Schema validation · [x] F6 Retry mechanism · [x] F7 Error handling · [~] F8 Token/context management · [x] F9 AI logging · F10 Critic/evaluator service (new) · F11 Eval harness (new)
 
-**G. Brand Context:** [x] G1 Schema · [~] G2 Storage · [~] G3 Retrieval · [~] G4 Updates · [~] G5 Versioning · G6 Locked decisions · G7 Display · G8 Provenance & stale detection (new) · [~] G9 Optimistic concurrency (new)
+**G. Brand Context:** [x] G1 Schema · [x] G2 Storage · [x] G3 Retrieval · [x] G4 Updates · [x] G5 Versioning · [~] G6 Locked decisions (enforced in code and tested; no lock UI yet) · [x] G7 Display · [~] G8 Provenance & stale detection (new — provenance written, stale detection later) · [x] G9 Optimistic concurrency (new)
 
-**H. Brand Interviewer:** H1 Prompt · H2 Question generation · H3 Answer extraction · H4 Missing-info detection · H5 Assumption detection · H6 Completion detection · H7 API · H8 UI (with suggested-answer chips) · H9 Context integration · H10 Testing · H11 Content-policy check (new)
+**H. Brand Interviewer:** [x] H1 Prompt · [x] H2 Question generation · [x] H3 Answer extraction · [x] H4 Missing-info detection · [x] H5 Assumption detection · [x] H6 Completion detection · [x] H7 API · [x] H8 UI (with suggested-answer chips) · [x] H9 Context integration · [x] H10 Testing · [x] H11 Content-policy check (new)
 
-**I. Workflow Orchestrator:** I1 Workflow schema · I2 Planner · I3 Module registry · I4 Module selection · I5 Executor · I6 Context passing · I7 Dynamic branching · I8 Stage repetition · I9 Completion · I10 Logging · I11 Testing · I12 Plan validator + default-plan fallback (new) · I13 Re-planning triggers (new) · I14 State-transition rules (new)
+**I. Workflow Orchestrator:** [x] I1 Workflow schema · I2 Planner · I3 Module registry · I4 Module selection · [~] I5 Executor (default plans + step completion; module runner is Phase 3) · [~] I6 Context passing (context-manager slices for the Interviewer) · I7 Dynamic branching · I8 Stage repetition · I9 Completion · I10 Logging · I11 Testing · I12 Plan validator + default-plan fallback (new) · I13 Re-planning triggers (new) · I14 State-transition rules (new)
 
 **J. Brand Doctor:** J1 Product analysis · J2 Brand analysis · J3 Strengths · J4 Weaknesses · J5 Contradictions · J6 Audience mismatch · J7 Genericity analysis · J8 Recommendations · J9 API · J10 UI · J11 Evidence + fact/interpretation labels (new) · J12 Draft Brand System extraction (new)
 
@@ -961,7 +966,7 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 
 **U. Export:** U1 Brand System export · U2 Launch Kit export · U3 PDF generation · U4 Copy-to-clipboard · U5 Shareable view · U6 Export testing · U7 Markdown + JSON export (new)
 
-**V. Testing:** V1 Unit · V2 API · V3 Database · V4 AI schema · V5 Agent (fake provider) · V6 Orchestrator · V7 Workflow integration · V8 Frontend · V9 End-to-end (demo path) · V10 Error · V11 Responsive · V12 Accessibility · V13 Lock-violation tests (new) · V14 Authorization tests (cross-user access) (new)
+**V. Testing:** [~] V1 Unit · [~] V2 API · V3 Database · V4 AI schema · V5 Agent (fake provider) · V6 Orchestrator · V7 Workflow integration · V8 Frontend · V9 End-to-end (demo path) · V10 Error · V11 Responsive · V12 Accessibility · [x] V13 Lock-violation tests (new) · [x] V14 Authorization tests (cross-user access) (new)
 
 **W. Security:** W1 Secret management · W2 Auth security · W3 Authorization · W4 Input validation · W5 File validation · W6 Rate limiting · W7 Prompt injection awareness · W8 Data isolation · W9 Secure logging · W10 Production security review · W11 AI usage caps (new)
 
@@ -1008,25 +1013,35 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 
 > Added 2026-09-24: Phase 1 (Foundation) code complete. Checkpoint still open: one structured OpenAI call working **in production** needs the founder's OpenAI key, a Neon database and a Vercel project (manual steps).
 
+> Added 2026-09-25: Phase 2 (Discover) code complete and verified against the **real Neon database**: project creation, the three-panel workspace, the Interviewer loop, context versioning with provenance, completion in code and the workflow advancing to `WORKFLOW_PLANNING`. `pnpm db:push` has been run (all tables now exist, including the new `interview_turns`). **The live model call is blocked: the OpenAI account has no credits** (§28), so the interview was exercised with a local stub of the OpenAI endpoint, not the real model. The demo path cannot be signed off in production until credits are added and `MODEL_PRIMARY` / `MODEL_FAST` are set in Vercel.
+
 | Task | Status | Notes |
 |---|---|---|
 | A1–A5, A11 | [x] | Next.js 16.3 + TS strict + Tailwind 4 + shadcn/ui (Radix base), pnpm 12, scripts per §20.4 (`eval`, `record:demo` deferred) |
-| A6 | [~] | Drizzle schema, Neon HTTP client, owner-scoped queries. Not yet run against a real database: needs `DATABASE_URL` + `pnpm db:push` |
+| A6 | [x] | Drizzle schema, Neon HTTP client, owner-scoped queries; `pnpm db:push` applied and exercised end to end (2026-09-25) |
 | A8 | [~] | Structured JSON logs with `request_id` (`services/log.ts`); no Sentry |
 | A9 | [x] | `schemas/errors.ts` (§18.5 codes, `AppError`, `toErrorResponse`) + `services/route.ts` `withErrors` |
 | A12 | [ ] | `pnpm seed:demo` is a placeholder (Phase 8) |
 | B7 (guest part) | [~] | Signed `gg_uid` cookie via `src/proxy.ts` + `getOwnerId()`; "save my work" is post-hackathon |
-| D1, D2 | [~] / [x] | Landing hero + four stage cards; selection shows a toast until Phase 2 wires D3–D5 |
+| D1, D2 | [x] | Landing hero + four stage cards; selecting one creates the project and opens the workspace |
 | F1, F2, F4–F7 | [x] | `ai/llm.ts` `generateStructured`: Zod re-validation, 1 repair retry, 2 backoff retries on 429/5xx/network, per-tier timeouts, typed errors |
-| F3 | [~] | Registry pattern established with `prompts/ping.ts`; agent prompts come with each agent |
-| F8 | [ ] | Context slicing (`context-manager`) is Phase 2 |
-| F9 | [~] | `LlmTrace` returned by every call (also on failure via `AiCallError.trace`); `recordRun()` persists it. Routes start calling it in Phase 2 |
+| F3 | [x] | Registry shape set by `prompts/ping.ts` and followed by `prompts/interviewer.ts`; later agents add their own files |
+| F8 | [~] | `services/context-manager.ts` slices the context per agent (Interviewer done); token budgeting is post-hackathon |
+| F9 | [x] | `LlmTrace` on every call (also on failure via `AiCallError.trace`); the interview route persists both outcomes with `recordRun()` |
 | G1 | [x] | `schemas/brand-context.ts` + `emptyBrandContext()`; strict-mode compatibility is unit-tested |
-| G2–G5, G9 | [~] | Append-only versions, `saveContext` with expected version → `CONFLICT`. Untested against a real DB |
-| Z5 | [~] | `GET /api/health` (env presence, DB ping, `?ai=1` structured ping). Verified locally without credentials only |
-| Z1–Z3 | [ ] | Founder: create Vercel project, add Neon, set env vars, `db:push` |
+| G2–G5, G9 | [x] | Append-only versions, `saveContext` with expected version → `CONFLICT`; verified against the real database |
+| Z5 | [~] | `GET /api/health` (env presence, DB ping, `?ai=1` structured ping). DB check verified; the AI check cannot pass until the account has credits |
+| Z1–Z3 | [~] | Neon connected and `pnpm db:push` applied. Founder: confirm the Vercel project's env vars (`MODEL_PRIMARY`, `MODEL_FAST` were missing) |
+| C1–C3, C6 | [x] | `POST`/`GET /api/projects`, `GET /api/projects/[id]`, "Your projects" on the landing page, all owner-scoped |
+| D1, D3–D5 | [x] | Stage card → project + Brand Context v1 + default plan (§7.5) → `/project/[id]` |
+| E1–E4, E7–E9, E12 | [x] | Three panels (Workflow · AI Workspace · Brand Context), stacked in that order below `lg`; named loading, human error state with Try Again, empty states |
+| F3, F9 | [x] | `prompts/interviewer.ts` follows the registry shape; every call (including failures) is written to `workflow_runs` |
+| G2–G5, G7, G9 | [x] | Append-only context versions verified against Postgres (v1 → v4 across a run), provenance carries the user's own words |
+| H1–H11 | [x] | Interviewer agent, API, card UI, completion rule in code (§7.4), content-policy decline, 15 tests |
+| I1, I5, I6 | [x] / [~] | Default plans with static reasons + `completeStep`; AI-written reasons and the module runner are Phase 3 |
+| V13, V14 | [x] | Locked paths are never written (unit + route tests); another guest cookie gets 404 on read and write (also verified live) |
 
-Tests: 31 passing (`llm.ts` with the AI SDK mock model, session sign/verify/tamper, error-leak checks, strict-mode schema checks).
+Tests: 66 passing (`llm.ts` with the AI SDK mock model, session sign/verify/tamper, error-leak checks, strict-mode schema checks, Interviewer schema + agent, completion rule, context-manager locks and provenance, both project routes).
 
 #### Schedule
 
@@ -1190,6 +1205,10 @@ Record architectural decisions here (see `CLAUDE.md`). Format: **ID · Date · D
 | ADR-010 | 2026-09-24 | Guest cookie is set in `src/proxy.ts` (Node runtime), not `src/middleware.ts` (edge). **Alternative:** deprecated `middleware.ts`. **Impact:** none functionally; signing uses Web Crypto and still works on edge | Next.js 16 deprecated `middleware.ts` and renamed it Proxy; Proxy always runs on Node.js | Accepted |
 | ADR-011 | 2026-09-24 | `llm.ts` uses AI SDK 7 `generateText` + `Output.object({ schema })` instead of `generateObject` (§20.1, F2). **Impact:** same behavior (JSON schema response format, `NoObjectGeneratedError` on invalid output); retries handled in `llm.ts` with `maxRetries: 0` so the trace's retry count is exact | `generateObject` is marked deprecated in the installed AI SDK 7 | Accepted |
 | ADR-012 | 2026-09-24 | A timed-out model call is not retried (fast 30 s, primary 60 s per attempt); invalid output gets 1 repair retry, 429/5xx/network errors get 2 backoff retries | A second attempt after a timeout would exceed the route's `maxDuration` on Vercel | Accepted |
+| ADR-013 | 2026-09-25 | New `interview_turns` table for conversation history (§17). **Alternative:** replay turns from `workflow_runs.output_context`. **Impact:** additive; `pnpm db:push` applied | The schema had nowhere to keep the interview, and the runs table is a trace, not a transcript: the workspace needs ordered turns with their "why I'm asking" line and answer chips | Accepted |
+| ADR-014 | 2026-09-25 | The §7.4 threshold `confidence ≥ 0.7` reads as `low 0.2 / medium 0.5 / high 0.9`, so all three tracked fields must be `high`; the Interviewer may write only 13 allow-listed context paths (schema enum + code check) | ADR-009 stores levels, not numbers, and the completion rule must be deterministic. The path allow-list stops the discovery agent from writing positioning or identity fields that belong to later modules | Accepted |
+| ADR-015 | 2026-09-25 | A 429 that means "no credits left" (`insufficient_quota`) is not retried and is reported as `AI_PROVIDER_UNAVAILABLE`, not `RATE_LIMITED` | Found while testing Phase 2: the account is out of credit, and the retry ladder turned a 6 s failure into a 30 s one on the demo path. Nothing is gained by retrying an exhausted quota | Accepted |
+| ADR-016 | 2026-09-25 | The Zustand workspace store is created per mount behind a provider (`state/brand-store.tsx`), not as a module singleton | Zustand v5 serves `getInitialState()` during SSR, so a singleton seeded during render made the server render the workspace with an empty context and crash. A per-mount store makes the server-rendered snapshot the store's initial state | Accepted |
 
 
 ## 28. Open questions
@@ -1204,7 +1223,9 @@ Update the relevant sections and the Decision Log once answered.
 - [x] Team: solo; scope per ADR-008.
 
 **Still open**
-- [ ] **OpenAI account:** which models are available to you, your rate-limit tier, and your credit budget.
+- [x] **Which models:** the key can reach the gpt-4.1, gpt-4o and gpt-5.x families. Set for now: `MODEL_PRIMARY=gpt-4.1`, `MODEL_FAST=gpt-4.1-mini` (both honour `temperature`, so `OPENAI_OMIT_TEMPERATURE=0`). Switching `MODEL_PRIMARY` to `gpt-5.4` needs `OPENAI_OMIT_TEMPERATURE=1`, which also drops the critics' low temperature.
+- [ ] **🚨 OpenAI credits (blocker, 2026-09-25):** the account has **no credits remaining**, so every model call fails with `insufficient_quota`. Everything around the AI works (verified against the real database with a local stub), but no live AI step can run in dev or production until credits are added. Rate-limit tier still unknown.
+- [ ] **Vercel env vars:** `MODEL_PRIMARY` and `MODEL_FAST` were missing from the pulled env and must be added in Vercel too, or production will fail with `AI_PROVIDER_UNAVAILABLE`.
 - [ ] **Hosting accounts:** OK to use Vercel + Neon (free tiers)?
 - [ ] **Visual generation (T8):** default is *cut* for the hackathon. Confirm.
 - [ ] **Final product name and tagline:** keep "GG Branding Studio" / "Build a brand that can think."?
