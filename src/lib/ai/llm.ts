@@ -116,8 +116,25 @@ function buildRepairPrompt(originalPrompt: string, issues: string[]): string {
   ].join("\n");
 }
 
+/**
+ * A 429 can mean "slow down" or "this account is out of credit". Only the first
+ * is worth retrying; the second would burn the route's whole maxDuration before
+ * failing anyway, so it is reported immediately as a provider problem.
+ */
+function isQuotaExhausted(err: APICallError): boolean {
+  if (err.statusCode !== 429) return false;
+  const body = typeof err.responseBody === "string" ? err.responseBody.toLowerCase() : "";
+  return (
+    body.includes("insufficient_quota") ||
+    body.includes("billing_hard_limit_reached") ||
+    body.includes("no credits remaining") ||
+    body.includes("exceeded your current quota")
+  );
+}
+
 function isRetryableProviderError(err: unknown): err is APICallError {
   if (!APICallError.isInstance(err)) return false;
+  if (isQuotaExhausted(err)) return false;
   const status = err.statusCode;
   return status === 429 || (status !== undefined && status >= 500) || status === undefined || err.isRetryable;
 }
@@ -245,6 +262,13 @@ export async function generateStructured<S extends z.ZodType>(
           throw fail("RATE_LIMITED", `${agent}: provider rate limit after retries`, err);
         }
         throw fail("AI_PROVIDER_UNAVAILABLE", `${agent}: provider error after retries`, err);
+      } else if (APICallError.isInstance(err) && isQuotaExhausted(err)) {
+        throw fail(
+          "AI_PROVIDER_UNAVAILABLE",
+          `${agent}: the OpenAI account has no remaining quota`,
+          err,
+          false,
+        );
       } else if (err instanceof AppError) {
         throw err;
       } else {

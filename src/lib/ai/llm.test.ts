@@ -159,6 +159,27 @@ describe("generateStructured", () => {
     expect(model.doGenerateCalls).toHaveLength(2);
   });
 
+  it("fails fast when the account is out of credit instead of retrying the 429", async () => {
+    const model = useModel(async () => {
+      throw new APICallError({
+        message: "Rate limit",
+        url: "https://api.openai.com/v1/responses",
+        requestBodyValues: {},
+        statusCode: 429,
+        isRetryable: true,
+        responseBody: JSON.stringify({
+          error: { code: "insufficient_quota", message: "You have no credits remaining." },
+        }),
+      });
+    });
+
+    const error = (await generateStructured(baseOptions).catch((err: unknown) => err)) as AiCallError;
+
+    expect(error.code).toBe("AI_PROVIDER_UNAVAILABLE");
+    expect(error.retryable).toBe(false);
+    expect(model.doGenerateCalls).toHaveLength(1);
+  });
+
   it("maps a non-retryable provider error to AI_PROVIDER_UNAVAILABLE without retrying", async () => {
     const model = useModel(async () => {
       throw new APICallError({
