@@ -1060,6 +1060,12 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 | G6 | [x] | Choosing writes `selected_direction` + `positioning.*` + `personality.traits` with provenance, offers Lock, and never overwrites a locked path |
 | ADR-017 | [x] | Reasoning-effort env vars wired through `llm.ts` (see §20.2) |
 
+> **Real-model check, 2026-09-25 14:20 IST (production + local).** Production runs `MODEL_PRIMARY=gpt-6-sol`, `MODEL_FAST=gpt-6-luna`.
+> - **`gpt-6-luna` has credit; `gpt-6-sol` does not** (`insufficient_quota` / `credit_balance_exhausted`). So on production every fast-tier step runs for real — the interview and the AI-written plan reasons both work — and **Brand Battle fails in 0.36 s with the friendly `AI_PROVIDER_UNAVAILABLE` message**, not a crash or a 30 s hang (ADR-015 doing its job). Fixing this is a billing change, not a code change.
+> - Running the primary tier on `gpt-6-luna` locally proved the rest: **the large Battle schemas validate on a real model with zero repair retries**, three divergent directions came back, and the critic produced real objections and clichés.
+> - **Measured latency (gpt-6-luna):** interviewer 3.5–10 s · plan reasons 3.5–5.3 s · battle generate 24.2 s · battle challenge 10.9 s → **one Battle request ≈ 39 s against `maxDuration = 60`**. A slower primary model (gpt-6-sol, gpt-5.x-pro) will exceed it. Either keep the primary tier fast, raise `maxDuration` on a Vercel plan that allows it, or split generate and challenge into two requests.
+> - **Quality caveat:** on `gpt-6-luna` the critic scored the directions at distinctiveness 3–6 and genericity risk 5–7. gpt-6 models ignore `temperature` (§20.2), so the hot generator / cold critic split has no effect there. Worth comparing against `gpt-4.1` at 0.9 before the demo.
+
 Tests: 116 passing. Phase 3 added the plan validator and state machine, the planner's repair/fallback path, the SSE round trip, the Battle schemas against the shipped stub fixtures, the divergence check, score clamping, and the choose route (locked paths, stale versions, cross-guest 404).
 
 #### Schedule
@@ -1248,8 +1254,8 @@ Update the relevant sections and the Decision Log once answered.
 
 **Still open**
 - [x] **Which models:** the key can reach the gpt-4.1, gpt-4o and gpt-5.x families. Set for now: `MODEL_PRIMARY=gpt-4.1`, `MODEL_FAST=gpt-4.1-mini` (both honour `temperature`, so `OPENAI_OMIT_TEMPERATURE=0`). Switching `MODEL_PRIMARY` to `gpt-5.4` needs `OPENAI_OMIT_TEMPERATURE=1`, which also drops the critics' low temperature.
-- [ ] **🚨 OpenAI credits (blocker, 2026-09-25):** the account has **no credits remaining**, so every model call fails with `insufficient_quota`. Everything around the AI works (verified against the real database with a local stub), but no live AI step can run in dev or production until credits are added. Rate-limit tier still unknown.
-- [ ] **Vercel env vars:** `MODEL_PRIMARY` and `MODEL_FAST` were missing from the pulled env and must be added in Vercel too, or production will fail with `AI_PROVIDER_UNAVAILABLE`.
+- [~] **OpenAI credits (2026-09-25, updated 14:20):** the account is out of credit for paid models, **but `gpt-6-luna` runs**, so the fast tier works for real in production. `gpt-6-sol` (the current `MODEL_PRIMARY`) returns `credit_balance_exhausted`, so Brand Battle and every later primary-tier module fail with the friendly error until credits are added. Decide before the demo: add credits, or point `MODEL_PRIMARY` at a model the account can actually reach.
+- [x] **Vercel env vars:** set — production has both model ids (`gpt-6-sol` / `gpt-6-luna`) plus the database and session secret; `/api/health` is green.
 - [ ] **Hosting accounts:** OK to use Vercel + Neon (free tiers)?
 - [ ] **Visual generation (T8):** default is *cut* for the hackathon. Confirm.
 - [ ] **Final product name and tagline:** keep "GG Branding Studio" / "Build a brand that can think."?
