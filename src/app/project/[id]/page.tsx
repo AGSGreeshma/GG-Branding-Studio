@@ -1,8 +1,16 @@
 import { notFound } from "next/navigation";
 import { Workspace } from "@/components/workspace/workspace";
-import { getLatestContext, getProject, listInterviewTurns } from "@/lib/db/queries";
+import {
+  getLatestContext,
+  getModuleResult,
+  getProject,
+  listInterviewTurns,
+  listRuns,
+  type RunSummary,
+} from "@/lib/db/queries";
 import { toProjectSummary } from "@/lib/db/serialize";
 import { isAppError } from "@/lib/schemas/errors";
+import { BattleResultSchema } from "@/lib/schemas/outputs/battle";
 import { defaultPlanFor } from "@/lib/services/workflow-engine";
 import { getOwnerId } from "@/lib/session";
 
@@ -17,19 +25,25 @@ export default async function ProjectPage({ params }: PageProps<"/project/[id]">
   const { id } = await params;
 
   let snapshot;
+  let runs: RunSummary[] = [];
   try {
     const ownerId = await getOwnerId();
     const project = await getProject(ownerId, id);
-    const [{ context, version }, turns] = await Promise.all([
+    const [{ context, version }, turns, storedBattle, runHistory] = await Promise.all([
       getLatestContext(project.id),
       listInterviewTurns(project.id),
+      getModuleResult(project.id, "brand_battle"),
+      listRuns(project.id),
     ]);
+    const battle = BattleResultSchema.safeParse(storedBattle);
+    runs = runHistory;
     snapshot = {
       project: toProjectSummary(project),
       context,
       version,
       turns,
       plan: project.currentPlanJson ?? defaultPlanFor(project.entryStage),
+      battle: battle.success ? battle.data : null,
     };
   } catch (err) {
     // A project that isn't this guest's is indistinguishable from one that doesn't exist.
@@ -37,5 +51,5 @@ export default async function ProjectPage({ params }: PageProps<"/project/[id]">
     throw err;
   }
 
-  return <Workspace snapshot={snapshot} />;
+  return <Workspace snapshot={snapshot} runs={runs} />;
 }

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, ne, sql } from "drizzle-orm";
 import type { LlmTrace } from "@/lib/ai/types";
 import {
   BrandContextSchema,
@@ -297,6 +297,130 @@ export async function addInterviewTurn(input: NewInterviewTurn): Promise<Intervi
   const row = rows[0];
   if (!row) throw new AppError("INTERNAL", { message: "interview_turns insert returned no row" });
   return toInterviewTurn(row);
+}
+
+/*
+ * Module results. Phase 3 keeps a module's current output (the three battle
+ * directions and their critique) in `workflow_runs` under a reserved agent
+ * name rather than adding a table for it (ADR-020): it is the module's own
+ * output, it already has a project-scoped, time-ordered home, and the Brand
+ * Context stays reserved for decisions the user has actually made.
+ */
+export const MODULE_STATE_AGENT = "module_state";
+
+/** Replaces the stored state of one module. Call getProject(ownerId, id) first. */
+export async function saveModuleResult(
+  projectId: string,
+  module: ModuleName,
+  result: unknown,
+): Promise<void> {
+  await getDb().insert(workflowRuns).values({
+    projectId,
+    module,
+    status: "succeeded",
+    agent: MODULE_STATE_AGENT,
+    outputContext: result,
+    completedAt: new Date(),
+  });
+}
+
+/** The newest stored state for a module, or null. */
+export async function getModuleResult(
+  projectId: string,
+  module: ModuleName,
+): Promise<unknown | null> {
+  const rows = await getDb()
+    .select({ output: workflowRuns.outputContext })
+    .from(workflowRuns)
+    .where(
+      and(
+        eq(workflowRuns.projectId, projectId),
+        eq(workflowRuns.module, module),
+        eq(workflowRuns.agent, MODULE_STATE_AGENT),
+      ),
+    )
+    .orderBy(desc(workflowRuns.createdAt))
+    .limit(1);
+  return rows[0]?.output ?? null;
+}
+
+export interface RunSummary {
+  id: string;
+  agent: string;
+  module: ModuleName | null;
+  status: RunStatus;
+  model: string | null;
+  latencyMs: number | null;
+  tokensIn: number | null;
+  tokensOut: number | null;
+  retryCount: number;
+  errorCode: string | null;
+  evaluation: unknown;
+  createdAt: string;
+}
+
+/** Model calls for the "How the AI worked" drawer (E11). Newest first. */
+export async function listRuns(projectId: string, limit = 25): Promise<RunSummary[]> {
+  const rows = await getDb()
+    .select()
+    .from(workflowRuns)
+    .where(and(eq(workflowRuns.projectId, projectId), ne(workflowRuns.agent, MODULE_STATE_AGENT)))
+    .orderBy(desc(workflowRuns.createdAt))
+    .limit(limit);
+  return rows.map((row) => ({
+    id: row.id,
+    agent: row.agent,
+    module: row.module,
+    status: row.status,
+    model: row.model,
+    latencyMs: row.latencyMs,
+    tokensIn: row.tokensIn,
+    tokensOut: row.tokensOut,
+    retryCount: row.retryCount,
+    errorCode: row.errorCode,
+    evaluation: row.evaluationJson,
+    createdAt: row.createdAt.toISOString(),
+  }));
+}
+
+/** Records one user decision per context path (plan §11.2, §17). */
+export async function saveDecision(input: {
+  projectId: string;
+  path: string;
+  value: unknown;
+  locked: boolean;
+  reason: string;
+  source: "user" | "ai_accepted";
+  runId?: string | null;
+}): Promise<string> {
+  const rows = await getDb()
+    .insert(decisions)
+    .values({
+      projectId: input.projectId,
+      path: input.path,
+      category: input.path.split(".")[0] ?? input.path,
+      value: input.value as never,
+      locked: input.locked,
+      reason: input.reason,
+      source: input.source,
+      runId: input.runId ?? null,
+    })
+    .returning({ id: decisions.id });
+  const id = rows[0]?.id;
+  if (!id) throw new AppError("INTERNAL", { message: "decisions insert returned no row" });
+  return id;
+}
+
+/** Sets the lock flag on the most recent decision for a path. */
+export async function setDecisionLock(
+  projectId: string,
+  path: string,
+  locked: boolean,
+): Promise<void> {
+  await getDb()
+    .update(decisions)
+    .set({ locked, updatedAt: new Date() })
+    .where(and(eq(decisions.projectId, projectId), eq(decisions.path, path)));
 }
 
 /** Round trip to Postgres for /api/health. Returns latency in ms; throws if unreachable. */

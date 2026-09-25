@@ -80,6 +80,12 @@ export type PlanStep = z.infer<typeof PlanStepSchema>;
 export const WorkflowPlanSchema = z.object({
   steps: z.array(PlanStepSchema),
   fallback_used: z.boolean(),
+  /**
+   * Whether the step reasons were written by the planner call or are the static
+   * defaults (§7.5). Lets the orchestrator plan once per project instead of on
+   * every workflow request, and the sidebar say so honestly.
+   */
+  reasons_source: z.enum(["default", "ai"]),
 });
 export type WorkflowPlan = z.infer<typeof WorkflowPlanSchema>;
 

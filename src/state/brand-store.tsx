@@ -11,6 +11,8 @@ import {
   type InterviewTurn,
 } from "@/lib/schemas/interview";
 import type { ProjectSummary } from "@/lib/schemas/project";
+import type { BattleResult } from "@/lib/schemas/outputs/battle";
+import type { WorkflowEvent } from "@/lib/services/events";
 import type { WorkflowPlan } from "@/lib/schemas/workflow";
 
 /*
@@ -28,6 +30,16 @@ export interface WorkspaceSnapshot {
   version: number;
   turns: InterviewTurn[];
   plan: WorkflowPlan;
+  /** The current Brand Battle, if one has run (plan §14.3). */
+  battle: BattleResult | null;
+}
+
+/** One line in the workspace activity log while a module runs (plan §18.4). */
+export interface ActivityLine {
+  id: string;
+  kind: "progress" | "agent" | "finding";
+  text: string;
+  severity?: "low" | "medium" | "high";
 }
 
 type Status = "idle" | "thinking" | "error";
@@ -40,11 +52,35 @@ export interface BrandState extends WorkspaceSnapshot {
   completionReason: CompletionReason | null;
   declined: boolean;
   questionsAsked: number;
+
+  /** Module run state, driven by the workflow event stream. */
+  workflowStatus: "idle" | "running" | "error";
+  /** The current loading message, from module.started / module.progress. */
+  workflowMessage: string | null;
+  workflowError: string | null;
+  activity: ActivityLine[];
+  /** Set when the module needs the user to decide (plan §11.4). */
+  decisionPrompt: string | null;
+  planFallbackReason: string | null;
+
   /** Asks the first question when a fresh project opens. */
   begin: () => Promise<void>;
   answer: (text: string) => Promise<void>;
   skip: () => Promise<void>;
   retry: () => Promise<void>;
+
+  /** Applies one streamed workflow event (E10). */
+  applyEvent: (event: WorkflowEvent) => void;
+  startWorkflow: () => void;
+  failWorkflow: (message: string) => void;
+  finishWorkflow: () => void;
+  setBattle: (battle: BattleResult) => void;
+  applyBattleResponse: (payload: {
+    battle: BattleResult;
+    context: BrandContext;
+    version: number;
+    plan: WorkflowPlan;
+  }) => void;
 }
 
 const PENDING_PREFIX = "pending-";
@@ -141,6 +177,103 @@ export function createBrandStore(snapshot: WorkspaceSnapshot): StoreApi<BrandSta
       declined: false,
       questionsAsked: countQuestions(snapshot.turns),
 
+      workflowStatus: "idle",
+      workflowMessage: null,
+      workflowError: null,
+      activity: [],
+      decisionPrompt: null,
+      planFallbackReason: null,
+
+      startWorkflow: () =>
+        set({
+          workflowStatus: "running",
+          workflowError: null,
+          workflowMessage: "Planning your next step…",
+          activity: [],
+          decisionPrompt: null,
+        }),
+      failWorkflow: (message) =>
+        set({ workflowStatus: "error", workflowError: message, workflowMessage: null }),
+      finishWorkflow: () =>
+        set((state) =>
+          state.workflowStatus === "running"
+            ? { workflowStatus: "idle", workflowMessage: null }
+            : state,
+        ),
+      setBattle: (battle) => set({ battle }),
+      applyBattleResponse: (payload) =>
+        set({
+          battle: payload.battle,
+          context: payload.context,
+          version: payload.version,
+          plan: payload.plan,
+          workflowStatus: "idle",
+          workflowMessage: null,
+          workflowError: null,
+        }),
+
+      applyEvent: (event) =>
+        set((state) => {
+          const addActivity = (line: ActivityLine): ActivityLine[] =>
+            [...state.activity, line].slice(-12);
+
+          switch (event.type) {
+            case "workflow.planned":
+              return {
+                plan: event.plan,
+                planFallbackReason: event.fallback_used ? event.fallback_reason : null,
+                workflowMessage: "Your workflow is ready.",
+              };
+            case "module.started":
+              return { workflowMessage: event.label, decisionPrompt: null };
+            case "module.progress":
+              return {
+                workflowMessage: event.message,
+                activity: addActivity({
+                  id: `p-${state.activity.length}`,
+                  kind: "progress",
+                  text: event.message,
+                }),
+              };
+            case "agent.completed":
+              return {
+                activity: addActivity({
+                  id: `a-${state.activity.length}`,
+                  kind: "agent",
+                  text: `${event.agent} — ${event.summary}`,
+                }),
+              };
+            case "critique.finding":
+              return {
+                activity: addActivity({
+                  id: `f-${state.activity.length}`,
+                  kind: "finding",
+                  text: event.detail,
+                  severity: event.severity,
+                }),
+              };
+            case "module.completed":
+              return {
+                plan: event.plan,
+                battle: event.battle ?? state.battle,
+                workflowStatus: "idle",
+                workflowMessage: null,
+              };
+            case "decision.required":
+              return { decisionPrompt: event.prompt, workflowStatus: "idle", workflowMessage: null };
+            case "context.updated":
+              return { version: event.version };
+            case "error":
+              return {
+                workflowStatus: "error",
+                workflowError: event.error.message,
+                workflowMessage: null,
+              };
+            default:
+              return state;
+          }
+        }),
+
       begin: () => send({}),
       answer: (text) => send({ answer: text }),
       skip: () => send({ skip: true }),
@@ -165,7 +298,12 @@ export function BrandStoreProvider({
 }
 
 export function useBrandStore<T>(selector: (state: BrandState) => T): T {
+  return useStore(useBrandStoreApi(), selector);
+}
+
+/** The store itself, for callers that need getState() outside a render. */
+export function useBrandStoreApi(): StoreApi<BrandState> {
   const store = useContext(BrandStoreContext);
   if (!store) throw new Error("useBrandStore must be used inside a BrandStoreProvider");
-  return useStore(store, selector);
+  return store;
 }

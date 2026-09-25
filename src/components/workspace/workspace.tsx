@@ -1,34 +1,106 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeftIcon, ArrowRightIcon, InfoIcon } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
+import { LoadingStatus } from "@/components/loading-status";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
+import type { RunSummary } from "@/lib/db/queries";
 import { MODULE_LABELS } from "@/lib/services/workflow-engine";
 import { BrandStoreProvider, useBrandStore, type WorkspaceSnapshot } from "@/state/brand-store";
+import { useWorkflowStream } from "@/state/use-workflow-stream";
+import { BattleView } from "./battle-view";
 import { BrandContextPanel } from "./brand-context-panel";
+import { HowTheAiWorked } from "./how-the-ai-worked";
 import { InterviewPanel } from "./interview-panel";
 import { WorkflowSidebar } from "./workflow-sidebar";
 
 /*
  * Three-panel workspace (plan §9): Workflow · AI Workspace · Brand Context.
  * Below lg the panels stack in that same order (§10, E9).
+ * The client drives the workflow loop: one module per request (ADR-003, E10).
  */
 
-export function Workspace({ snapshot }: { snapshot: WorkspaceSnapshot }) {
+export function Workspace({
+  snapshot,
+  runs,
+}: {
+  snapshot: WorkspaceSnapshot;
+  runs: RunSummary[];
+}) {
   return (
     <BrandStoreProvider snapshot={snapshot}>
-      <WorkspaceShell />
+      <WorkspaceShell runs={runs} />
     </BrandStoreProvider>
   );
 }
 
-function WorkspaceShell() {
+/** What the agents are doing right now, from the event stream (plan §18.4). */
+function ActivityLog() {
+  const activity = useBrandStore((state) => state.activity);
+  if (activity.length === 0) return null;
+
+  return (
+    <ol
+      aria-live="polite"
+      className="flex flex-col gap-1.5 rounded-xl border border-border bg-card/60 p-3"
+    >
+      {activity.map((line) => (
+        <li
+          key={line.id}
+          className={`text-xs leading-snug ${
+            line.kind === "finding" && line.severity === "high"
+              ? "text-destructive"
+              : "text-muted-foreground"
+          }`}
+        >
+          <span aria-hidden>
+            {line.kind === "agent" ? "✓ " : line.kind === "finding" ? "! " : "· "}
+          </span>
+          {line.text}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function WorkspaceShell({ runs }: { runs: RunSummary[] }) {
+  const router = useRouter();
   const name = useBrandStore((state) => state.project.name);
   const plan = useBrandStore((state) => state.plan);
+  const battle = useBrandStore((state) => state.battle);
+  const interviewComplete = useBrandStore((state) => state.complete);
+  const planFallbackReason = useBrandStore((state) => state.planFallbackReason);
+  const workflow = useWorkflowStream();
+  const autoStarted = useRef<true | null>(null);
 
+  const interviewStep = plan.steps.find((step) => step.module === "interviewer");
+  const interviewDone = !interviewStep || interviewStep.status === "complete" || interviewComplete;
   const runningModule = plan.steps.find((step) => step.status === "running")?.module ?? null;
-  const showsInterview = runningModule === "interviewer" || plan.steps[0]?.module === "interviewer";
+  const awaitingDecision = plan.steps.some((step) => step.status === "awaiting_decision");
+  const showsBattle = (battle?.directions.length ?? 0) > 0;
+
+  // Discovery flows straight into the next module: the user should not have to
+  // ask for the workflow they were already promised.
+  useEffect(() => {
+    if (autoStarted.current != null || !interviewDone || showsBattle) return;
+    if (workflow.status !== "idle") return;
+    autoStarted.current = true;
+    void workflow.run();
+  }, [interviewDone, showsBattle, workflow]);
+
+  // Refresh the server-rendered run list once a module finishes (E11).
+  const refreshed = useRef(false);
+  useEffect(() => {
+    if (workflow.status === "idle" && showsBattle && !refreshed.current) {
+      refreshed.current = true;
+      router.refresh();
+    }
+  }, [workflow.status, showsBattle, router]);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -45,7 +117,11 @@ function WorkspaceShell() {
             <div className="flex min-w-0 flex-col">
               <span className="truncate text-sm font-medium">{name}</span>
               <span className="truncate text-xs text-muted-foreground">
-                {runningModule ? MODULE_LABELS[runningModule] : "Workflow complete"}
+                {runningModule
+                  ? MODULE_LABELS[runningModule]
+                  : awaitingDecision
+                    ? "Waiting for your decision"
+                    : "Workflow complete"}
               </span>
             </div>
           </div>
@@ -63,20 +139,52 @@ function WorkspaceShell() {
       </header>
 
       <div className="mx-auto grid w-full max-w-[100rem] flex-1 grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[17rem_minmax(0,1fr)_20rem] lg:gap-8">
-        <div className="lg:sticky lg:top-20 lg:self-start">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-20 lg:self-start">
           <WorkflowSidebar />
+          {planFallbackReason ? (
+            <p className="flex items-start gap-2 rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground">
+              <InfoIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+              Showing the standard plan for your stage, because {planFallbackReason}.
+            </p>
+          ) : null}
         </div>
 
-        <main className="min-w-0">
-          {showsInterview ? (
-            <InterviewPanel />
-          ) : (
-            <EmptyState
-              title="This stage starts somewhere else"
-              description="Your workflow begins with a different capability. Those arrive in the next build — the four stages share the same workspace."
-              className="py-14"
+        <main className="flex min-w-0 flex-col gap-6">
+          {!interviewDone ? <InterviewPanel /> : null}
+
+          {interviewDone && workflow.status === "running" ? (
+            <div className="flex flex-col gap-3">
+              <LoadingStatus message={workflow.message ?? "Working…"} />
+              <ActivityLog />
+            </div>
+          ) : null}
+
+          {interviewDone && workflow.status === "error" ? (
+            <ErrorState
+              message={workflow.error ?? "We couldn't complete this AI step."}
+              onRetry={() => void workflow.run()}
             />
-          )}
+          ) : null}
+
+          {showsBattle ? <BattleView /> : null}
+
+          {interviewDone && !showsBattle && workflow.status === "idle" ? (
+            <div className="flex flex-col items-start gap-3">
+              <EmptyState
+                title="Ready for the next step"
+                description="Your Brand Context is filled in. The next capability in your workflow runs when you are."
+                className="w-full py-10"
+              />
+              <Button type="button" onClick={() => void workflow.run()}>
+                Run the next step
+                <ArrowRightIcon className="size-4" aria-hidden />
+              </Button>
+            </div>
+          ) : null}
+
+          {showsBattle && workflow.status !== "running" ? <ActivityLog /> : null}
+
+          <HowTheAiWorked runs={runs} />
         </main>
 
         <div className="lg:sticky lg:top-20 lg:self-start">

@@ -122,6 +122,34 @@ export function BrandContextPanel() {
           {context.audience.pain_points.length > 0 ? (
             <ListField label="Pain points" items={context.audience.pain_points} />
           ) : null}
+
+          {context.selected_direction ? (
+            <div className="flex flex-col gap-2 rounded-xl border border-brand/40 bg-brand-soft/40 p-3">
+              <h3 className="text-xs font-medium tracking-[0.1em] text-brand uppercase">
+                Chosen direction
+              </h3>
+              <p className="text-sm font-medium">{context.selected_direction.name}</p>
+              <p className="text-sm leading-relaxed text-pretty">
+                {context.selected_direction.summary}
+              </p>
+            </div>
+          ) : null}
+
+          {context.positioning.statement ? (
+            <>
+              <Field label="Positioning" value={context.positioning.statement} context={context} />
+              <Field label="Category" value={context.positioning.category} context={context} />
+              <Field
+                label="Differentiator"
+                value={context.positioning.differentiator}
+                context={context}
+              />
+            </>
+          ) : null}
+
+          {context.personality.traits.length > 0 ? (
+            <ListField label="Personality" items={context.personality.traits} />
+          ) : null}
         </div>
       ) : (
         <EmptyState

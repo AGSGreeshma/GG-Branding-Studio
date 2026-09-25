@@ -296,14 +296,16 @@ Its plan and reasons are stored and shown in the Workflow Sidebar.
 
 ### 7.5 Default plans (fallbacks and examples)
 ```
-Idea (A):     Interviewer → Audience Shifter → Brand Battle → Five Worlds
+Idea (A):     Interviewer → Brand Battle → Five Worlds
               → Anti-Generic → Brand Builder → Launch Kit
-Product (B):  Interviewer → Brand Doctor → Audience Shifter → Brand Battle → Anti-Generic
+Product (B):  Interviewer → Brand Doctor → Brand Battle → Anti-Generic
               → Brand Builder → Launch Kit
 Brand (C):    Brand Doctor → Brand Battle → Five Worlds → Anti-Generic
               → Brand Builder → Consistency Guardian
 Protect (D):  Brand Doctor (extract draft system) → user confirms → Consistency Guardian
 ```
+
+> Changed 2026-09-25 (ADR-018): the Audience Shifter left the Stage A and B plans; it ships as a tab beside the Battle results (§14.4). The validator's rules are listed in §7.3 step 3, with "a consistency check before finalization" read as ADR-019 defines it.
 
 ---
 
@@ -855,7 +857,16 @@ Why not FastAPI + React: two languages, two deployments, CORS, and duplicated ty
 - **Rate limits and credits:** Brand Battle fires about 5 calls. Cap concurrency at 3, back off on 429, and check the account's tier limits before the demo.
 - **Cost guard:** per-project daily AI-call cap and per-IP rate limit (§19), because the live URL is public.
 
+> Added 2026-09-25 (ADR-017), from reading the installed `@ai-sdk/openai` 4.0.73:
+> - `gpt-6-sol` and `gpt-6-luna` **are** handled correctly: both are known model ids, both are detected as reasoning models, and both accept a reasoning effort of `none`, `low`, `medium`, `high`, `xhigh` or `max`.
+> - For any `gpt-6*` model the provider **drops `temperature`** (with a warning), even at effort `none`, because `supportsNonReasoningParameters` is false. The generator-vs-critic temperature split (0.9 vs 0.2, §13.5) therefore has no effect on gpt-6 models.
+> - Setting a reasoning effort also makes the provider request a `detailed` reasoning summary by default, which costs output tokens.
+> - **Recommendation while the account has no gpt-6 access:** keep `MODEL_PRIMARY=gpt-4.1`, `MODEL_FAST=gpt-4.1-mini` and `OPENAI_OMIT_TEMPERATURE=0`, so the critics really do run cold. The account's model list (checked 2026-09-25) reaches gpt-5.4 but not gpt-6.
+> - `MODEL_PRIMARY_REASONING_EFFORT` / `MODEL_FAST_REASONING_EFFORT` are optional and ignored by the gpt-4.1 family, so they can stay set when switching models.
+
 ### 20.3 Environment variables
+
+> Added 2026-09-25: `MODEL_PRIMARY_REASONING_EFFORT` and `MODEL_FAST_REASONING_EFFORT` (`none|low|medium`, optional) and, for local work only, `OPENAI_BASE_URL` — set by `pnpm dev:stub` to point at `scripts/stub` (ADR-021) and never set in production.
 Keep `.env.example` in sync.
 ```
 OPENAI_API_KEY=
@@ -932,19 +943,19 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 
 **D. Stage selection:** [x] D1 Stage selector UI · [x] D2 Stage descriptions · [x] D3 Stage selection state · [x] D4 Project initialization · [x] D5 Initial AI context · D6 Stage D bootstrap flow (new)
 
-**E. Workspace:** [x] E1 Layout · [x] E2 Workflow sidebar · [x] E3 AI conversation (interview cards) · [x] E4 Brand Context panel · E5 Decision cards · E6 Result cards · [x] E7 Loading states · [x] E8 Error states · [x] E9 Responsive workspace · E10 Streaming client hook (new) · E11 "How the AI worked" drawer (new) · [x] E12 Empty states (new)
+**E. Workspace:** [x] E1 Layout · [x] E2 Workflow sidebar · [x] E3 AI conversation (interview cards) · [x] E4 Brand Context panel · [x] E5 Decision cards · [x] E6 Result cards · [x] E7 Loading states · [x] E8 Error states · [x] E9 Responsive workspace · [x] E10 Streaming client hook (new) · [x] E11 "How the AI worked" drawer (new) · [x] E12 Empty states (new)
 
-**F. AI foundation:** [x] F1 LLM provider abstraction · [x] F2 AI request service · [x] F3 Prompt registry · [x] F4 Structured output parser · [x] F5 Schema validation · [x] F6 Retry mechanism · [x] F7 Error handling · [~] F8 Token/context management · [x] F9 AI logging · F10 Critic/evaluator service (new) · F11 Eval harness (new)
+**F. AI foundation:** [x] F1 LLM provider abstraction · [x] F2 AI request service · [x] F3 Prompt registry · [x] F4 Structured output parser · [x] F5 Schema validation · [x] F6 Retry mechanism · [x] F7 Error handling · [~] F8 Token/context management · [x] F9 AI logging · [~] F10 Critic/evaluator service (new — the Battle critic scores per §13.5; a shared service comes with Anti-Generic) · F11 Eval harness (new)
 
-**G. Brand Context:** [x] G1 Schema · [x] G2 Storage · [x] G3 Retrieval · [x] G4 Updates · [x] G5 Versioning · [~] G6 Locked decisions (enforced in code and tested; no lock UI yet) · [x] G7 Display · [~] G8 Provenance & stale detection (new — provenance written, stale detection later) · [x] G9 Optimistic concurrency (new)
+**G. Brand Context:** [x] G1 Schema · [x] G2 Storage · [x] G3 Retrieval · [x] G4 Updates · [x] G5 Versioning · [x] G6 Locked decisions (enforced in code on every write; Lock offered when a direction is chosen) · [x] G7 Display · [~] G8 Provenance & stale detection (new — provenance written, stale detection later) · [x] G9 Optimistic concurrency (new)
 
 **H. Brand Interviewer:** [x] H1 Prompt · [x] H2 Question generation · [x] H3 Answer extraction · [x] H4 Missing-info detection · [x] H5 Assumption detection · [x] H6 Completion detection · [x] H7 API · [x] H8 UI (with suggested-answer chips) · [x] H9 Context integration · [x] H10 Testing · [x] H11 Content-policy check (new)
 
-**I. Workflow Orchestrator:** [x] I1 Workflow schema · I2 Planner · I3 Module registry · I4 Module selection · [~] I5 Executor (default plans + step completion; module runner is Phase 3) · [~] I6 Context passing (context-manager slices for the Interviewer) · I7 Dynamic branching · I8 Stage repetition · I9 Completion · I10 Logging · I11 Testing · I12 Plan validator + default-plan fallback (new) · I13 Re-planning triggers (new) · I14 State-transition rules (new)
+**I. Workflow Orchestrator:** [x] I1 Workflow schema · [~] I2 Planner (lite: AI writes the reasons, code owns the plan — ADR-008) · [x] I3 Module registry · [~] I4 Module selection (registry-driven skip; full selection is post-hackathon) · [x] I5 Executor · [x] I6 Context passing · I7 Dynamic branching · I8 Stage repetition · I9 Completion · [x] I10 Logging · [x] I11 Testing · [x] I12 Plan validator + default-plan fallback (new) · I13 Re-planning triggers (new) · [x] I14 State-transition rules (new)
 
 **J. Brand Doctor:** J1 Product analysis · J2 Brand analysis · J3 Strengths · J4 Weaknesses · J5 Contradictions · J6 Audience mismatch · J7 Genericity analysis · J8 Recommendations · J9 API · J10 UI · J11 Evidence + fact/interpretation labels (new) · J12 Draft Brand System extraction (new)
 
-**K. Brand Battle:** K1 Strategist · K2 Creative Director · K3 Audience Advocate · K4 Skeptic · K5 Differentiation agent · K6 Parallel generation · K7 Debate/synthesis · K8 Direction evaluation · K9 API · K10 UI · K11 User selection · K12 Direction persistence · K13 Divergence check (new)
+**K. Brand Battle:** [x] K1 Strategist · [x] K2 Creative Director · [x] K3 Audience Advocate · [x] K4 Skeptic · [x] K5 Differentiation agent · K6 Parallel generation (*one call covers all three lenses in Lite*) · [~] K7 Debate/synthesis (Combine merges two directions; the 5-agent debate is post-hackathon) · [x] K8 Direction evaluation · [x] K9 API · [x] K10 UI · [x] K11 User selection · [x] K12 Direction persistence · [x] K13 Divergence check (new)
 
 **L. Audience Shifter:** L1 Audience discovery · L2 Profile · L3 Value proposition · L4 Positioning · L5 Messaging · L6 Comparison · L7 UI · L8 Selection
 
@@ -970,7 +981,7 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 
 **W. Security:** W1 Secret management · W2 Auth security · W3 Authorization · W4 Input validation · W5 File validation · W6 Rate limiting · W7 Prompt injection awareness · W8 Data isolation · W9 Secure logging · W10 Production security review · W11 AI usage caps (new)
 
-**X. Performance:** X1 AI latency tracking · X2 Context size management · X3 Query optimization · X4 Frontend rendering · X5 Caching · X6 Safe parallel agents · X7 Streaming
+**X. Performance:** [x] X1 AI latency tracking · X2 Context size management · X3 Query optimization · X4 Frontend rendering · X5 Caching · X6 Safe parallel agents · [x] X7 Streaming
 
 **Y. Observability:** Y1 Structured logs + request IDs · Y2 Error tracking · Y3 Run metrics views · Y4 Workflow completion tracking (all new, detailing §19)
 
@@ -1040,8 +1051,16 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 | H1–H11 | [x] | Interviewer agent, API, card UI, completion rule in code (§7.4), content-policy decline, 15 tests |
 | I1, I5, I6 | [x] / [~] | Default plans with static reasons + `completeStep`; AI-written reasons and the module runner are Phase 3 |
 | V13, V14 | [x] | Locked paths are never written (unit + route tests); another guest cookie gets 404 on read and write (also verified live) |
+| **Phase 3** | | **Orchestrate + Battle Lite, 2026-09-25** |
+| I1, I3, I5, I6, I12, I14 | [x] | Module registry, plan validator (requires · locks · Builder before Launch Kit · a check before finalization), one repair attempt, static fallback, workflow state machine |
+| I2 (lite) | [x] | One `MODEL_FAST` call writes the sidebar reasons and may skip a covered step; any failure falls back to the static plan with `fallback_used: true` |
+| E10, X7 | [x] | `services/events.ts` + `stream.ts` (SSE over `ReadableStream`), `useWorkflowStream` on the client; `POST /workflow/next` runs one module per request |
+| K1–K5, K8–K13 | [x] | Battle Lite: generate (primary, 3 lenses) + challenge (fast, scores/objections/clichés/recommendation), code divergence check with one regeneration, Choose · Combine · Revise · Generate another |
+| E5, E6, E11 | [x] | Battle cards with lens badges, score bars, critic objections, "Why?" (§11.3) and a "How the AI worked" list from `workflow_runs` |
+| G6 | [x] | Choosing writes `selected_direction` + `positioning.*` + `personality.traits` with provenance, offers Lock, and never overwrites a locked path |
+| ADR-017 | [x] | Reasoning-effort env vars wired through `llm.ts` (see §20.2) |
 
-Tests: 66 passing (`llm.ts` with the AI SDK mock model, session sign/verify/tamper, error-leak checks, strict-mode schema checks, Interviewer schema + agent, completion rule, context-manager locks and provenance, both project routes).
+Tests: 116 passing. Phase 3 added the plan validator and state machine, the planner's repair/fallback path, the SSE round trip, the Battle schemas against the shipped stub fixtures, the divergence check, score clamping, and the choose route (locked paths, stale versions, cross-guest 404).
 
 #### Schedule
 
@@ -1209,6 +1228,11 @@ Record architectural decisions here (see `CLAUDE.md`). Format: **ID · Date · D
 | ADR-014 | 2026-09-25 | The §7.4 threshold `confidence ≥ 0.7` reads as `low 0.2 / medium 0.5 / high 0.9`, so all three tracked fields must be `high`; the Interviewer may write only 13 allow-listed context paths (schema enum + code check) | ADR-009 stores levels, not numbers, and the completion rule must be deterministic. The path allow-list stops the discovery agent from writing positioning or identity fields that belong to later modules | Accepted |
 | ADR-015 | 2026-09-25 | A 429 that means "no credits left" (`insufficient_quota`) is not retried and is reported as `AI_PROVIDER_UNAVAILABLE`, not `RATE_LIMITED` | Found while testing Phase 2: the account is out of credit, and the retry ladder turned a 6 s failure into a 30 s one on the demo path. Nothing is gained by retrying an exhausted quota | Accepted |
 | ADR-016 | 2026-09-25 | The Zustand workspace store is created per mount behind a provider (`state/brand-store.tsx`), not as a module singleton | Zustand v5 serves `getInitialState()` during SSR, so a singleton seeded during render made the server render the workspace with an empty context and crash. A per-mount store makes the server-rendered snapshot the store's initial state | Accepted |
+| ADR-017 | 2026-09-25 | Optional `MODEL_PRIMARY_REASONING_EFFORT` / `MODEL_FAST_REASONING_EFFORT` (none/low/medium), sent via `providerOptions.openai` only when set, with a per-call override | Reasoning models (o-series, gpt-5+, gpt-6) spend tokens and seconds thinking; the interviewer's short turns don't need it and the Battle might. Non-reasoning models ignore the field, so it is safe to leave set | Accepted |
+| ADR-018 | 2026-09-25 | Audience Shifter leaves the Stage A and B default plans; Brand Battle follows the interview directly (§7.5). It stays in the registry for Phase 7 as a tab beside the Battle results (§14.4) | Solo scope (ADR-008) ships it as a tab, not a workflow step, so a plan step for it would promise a screen that does not exist. Impact: §7.5 Stage A/B plans are one step shorter | Accepted |
+| ADR-019 | 2026-09-25 | The §7.3 rule "a consistency check comes before finalization" is implemented as: if the plan contains `brand_builder`, an `anti_generic` or `consistency_guardian` step must come before it | "Finalization" is the Brand Builder: it is the step that turns choices into the Brand System. All four default plans satisfy this, so the static fallback always validates | Accepted |
+| ADR-020 | 2026-09-25 | A module's current output (the Battle's directions and critique) is stored in `workflow_runs` under the reserved agent name `module_state`, not in a new table or the Brand Context | The Brand Context holds decisions the user has made; unchosen directions are not decisions. A new table would be a migration mid-hackathon for data that is already project-scoped and time-ordered. **Revisit** in Phase 5 if other modules need richer queries | Accepted |
+| ADR-021 | 2026-09-25 | Local OpenAI stub with per-agent fixtures (`scripts/stub/`), opt-in through `pnpm dev:stub` only | The OpenAI account has no credits until after the build, so the workflow, streaming and UI had to be verifiable some other way. It imitates tier latency (1–3 s fast, 5–15 s primary) and answers invalid once for `battle_challenge` so the repair retry is exercised. Nothing else sets `OPENAI_BASE_URL`, so `pnpm dev`, `pnpm build` and production can never reach it | Accepted |
 
 
 ## 28. Open questions

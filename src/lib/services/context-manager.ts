@@ -216,3 +216,64 @@ export function applyInterviewerOutput(
     },
   };
 }
+
+/* ------------------------------------------------------------------ *
+ * Generic writes (used by modules that write whole fields, e.g. the Battle)
+ * ------------------------------------------------------------------ */
+
+export interface ContextWrite {
+  /** Dotted path, at most two levels deep (e.g. "positioning.statement"). */
+  path: string;
+  value: unknown;
+  /** What this value was derived from, stored in provenance. */
+  evidence?: string;
+}
+
+function writeAnyPath(context: BrandContext, path: string, value: unknown): BrandContext {
+  const segments = path.split(".");
+  if (segments.length === 1) {
+    return { ...context, [segments[0]!]: value } as BrandContext;
+  }
+  const [section, field] = segments as [keyof BrandContext, string];
+  const current = context[section] as Record<string, unknown>;
+  return { ...context, [section]: { ...current, [field]: value } } as BrandContext;
+}
+
+/**
+ * Applies whole-field writes from a module's accepted output.
+ * Locked paths are skipped here, in code, whatever the module proposed
+ * (CLAUDE.md, AI rule 6). Every applied write records provenance.
+ */
+export function applyContextWrites(
+  context: BrandContext,
+  writes: readonly ContextWrite[],
+  options: ApplyOptions,
+): ApplyResult {
+  let next = context;
+  const changedPaths: string[] = [];
+  const blockedPaths: string[] = [];
+
+  for (const write of writes) {
+    if (isPathLocked(write.path, options.lockedPaths)) {
+      if (!blockedPaths.includes(write.path)) blockedPaths.push(write.path);
+      continue;
+    }
+    if (typeof write.value === "string" && !write.value.trim()) continue;
+
+    next = writeAnyPath(next, write.path, write.value);
+    if (!changedPaths.includes(write.path)) changedPaths.push(write.path);
+    next = {
+      ...next,
+      provenance: upsertProvenance(next.provenance, {
+        path: write.path,
+        source: options.source,
+        agent: options.agent,
+        run_id: options.runId,
+        decision_id: null,
+        derived_from: write.evidence?.trim() ? [write.evidence.trim().slice(0, MAX_TEXT_LENGTH)] : [],
+      }),
+    };
+  }
+
+  return { context: next, changedPaths, blockedPaths };
+}
