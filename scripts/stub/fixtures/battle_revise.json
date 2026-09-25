@@ -1,0 +1,33 @@
+{
+  "agent": "battle_revise",
+  "tier": "primary",
+  "invalid_first": false,
+  "outputs": [
+    {
+      "direction": {
+        "id": "a",
+        "lens": "strategist",
+        "name": "Finished Together",
+        "positioning": {
+          "category": "Track record platform for student teams",
+          "statement": "A place where students show the projects they finished and who they finished them with.",
+          "differentiator": "The record is shared credit between teammates, so it reads as recognition rather than a score.",
+          "value_proposition": "Pick teammates on evidence, and get credit for the ones you carried."
+        },
+        "audience_focus": "Students who deliver and want that recognised by the people they work with",
+        "personality": ["Straight-talking", "Generous", "Fair"],
+        "tagline_direction": "Credits at the end of a project rather than ratings on a profile",
+        "strengths": [
+          "Recognition reads as a reward, not surveillance",
+          "Shared credit gives both teammates a reason to confirm the work"
+        ],
+        "risks": [
+          "Softer framing makes the reliability signal less blunt",
+          "Mutual credit can be traded between friends"
+        ],
+        "why_this_lens": "The evidence still does the work, but framed as credit it is something students want to be part of."
+      },
+      "change_note": "Reframed the record from a reliability score into shared credit between teammates, which keeps the evidence but removes the surveillance feeling."
+    }
+  ]
+}

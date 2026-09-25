@@ -136,6 +136,48 @@ describe("generateStructured", () => {
     expect(model.doGenerateCalls[0]?.temperature).toBeUndefined();
   });
 
+  it("sends reasoning effort from the tier env var and no temperature when omitted", async () => {
+    vi.stubEnv("OPENAI_OMIT_TEMPERATURE", "1");
+    vi.stubEnv("MODEL_FAST_REASONING_EFFORT", "medium");
+    const model = useModel(reply('{"ok":true,"message":"hi"}'));
+
+    await generateStructured({ ...baseOptions, temperature: 0.9 });
+
+    const call = model.doGenerateCalls[0];
+    expect(call?.temperature).toBeUndefined();
+    expect(call?.providerOptions).toEqual({ openai: { reasoningEffort: "medium" } });
+  });
+
+  it("lets a call override the tier's reasoning effort", async () => {
+    vi.stubEnv("MODEL_FAST_REASONING_EFFORT", "medium");
+    const model = useModel(reply('{"ok":true,"message":"hi"}'));
+
+    await generateStructured({ ...baseOptions, reasoningEffort: "none" });
+
+    expect(model.doGenerateCalls[0]?.providerOptions).toEqual({
+      openai: { reasoningEffort: "none" },
+    });
+  });
+
+  it("sends no providerOptions when no reasoning effort is configured", async () => {
+    vi.stubEnv("MODEL_FAST_REASONING_EFFORT", "");
+    const model = useModel(reply('{"ok":true,"message":"hi"}'));
+
+    await generateStructured({ ...baseOptions, temperature: 0.3 });
+
+    expect(model.doGenerateCalls[0]?.providerOptions).toBeUndefined();
+    expect(model.doGenerateCalls[0]?.temperature).toBe(0.3);
+  });
+
+  it("ignores an unrecognised reasoning effort instead of failing the call", async () => {
+    vi.stubEnv("MODEL_FAST_REASONING_EFFORT", "turbo");
+    const model = useModel(reply('{"ok":true,"message":"hi"}'));
+
+    await generateStructured(baseOptions);
+
+    expect(model.doGenerateCalls[0]?.providerOptions).toBeUndefined();
+  });
+
   it("retries a 429 with backoff, then succeeds", async () => {
     let calls = 0;
     const model = useModel(async () => {

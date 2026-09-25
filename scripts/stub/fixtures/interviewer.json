@@ -1,0 +1,178 @@
+{
+  "agent": "interviewer",
+  "tier": "fast",
+  "invalid_first": false,
+  "outputs": [
+    {
+      "refusal": null,
+      "known_information": [
+        "An app helping college students find reliable teammates"
+      ],
+      "missing_information": [
+        "What goes wrong with finding teammates today",
+        "Which kind of projects this is for"
+      ],
+      "assumptions": [
+        "Most users are undergraduates"
+      ],
+      "next_question": "When students look for teammates today, what usually goes wrong?",
+      "question_reason": "The failure they feel most strongly is what your brand should promise to fix.",
+      "suggested_answers": [
+        "Nobody replies",
+        "Teammates drop out",
+        "You cannot tell who is reliable"
+      ],
+      "confidence": [
+        {
+          "path": "problem.statement",
+          "level": "low"
+        },
+        {
+          "path": "audience.primary",
+          "level": "high"
+        },
+        {
+          "path": "product.description",
+          "level": "medium"
+        }
+      ],
+      "extracted_updates": [
+        {
+          "path": "audience.primary",
+          "values": [
+            "College students"
+          ],
+          "evidence": "college students"
+        },
+        {
+          "path": "product.description",
+          "values": [
+            "An app that helps college students find reliable teammates"
+          ],
+          "evidence": "an app that helps college students find reliable teammates"
+        },
+        {
+          "path": "project.name",
+          "values": [
+            "Teammate Finder"
+          ],
+          "evidence": "find reliable teammates"
+        }
+      ]
+    },
+    {
+      "refusal": null,
+      "known_information": [
+        "Students cannot judge who will actually show up",
+        "Group chats are the current default"
+      ],
+      "missing_information": [
+        "Whether this is coursework, hackathons or side projects"
+      ],
+      "assumptions": [
+        "Group chats and word of mouth are how teams form today"
+      ],
+      "next_question": "Is this mainly for coursework, hackathons or side projects?",
+      "question_reason": "It decides who your brand should speak to first.",
+      "suggested_answers": [
+        "Coursework",
+        "Hackathons",
+        "Side projects"
+      ],
+      "confidence": [
+        {
+          "path": "problem.statement",
+          "level": "medium"
+        },
+        {
+          "path": "audience.primary",
+          "level": "high"
+        },
+        {
+          "path": "product.description",
+          "level": "high"
+        }
+      ],
+      "extracted_updates": [
+        {
+          "path": "problem.statement",
+          "values": [
+            "Students cannot tell in advance who will actually do the work"
+          ],
+          "evidence": "you cannot tell who is reliable"
+        },
+        {
+          "path": "audience.pain_points",
+          "values": [
+            "Teammates drop out halfway",
+            "Nobody replies in group chats"
+          ],
+          "evidence": "teammates drop out"
+        },
+        {
+          "path": "problem.importance",
+          "values": [
+            "A bad teammate can cost a whole semester grade"
+          ],
+          "evidence": "you cannot tell who is reliable"
+        }
+      ]
+    },
+    {
+      "refusal": null,
+      "known_information": [
+        "Hackathon and side-project teams",
+        "Reliability is the core problem"
+      ],
+      "missing_information": [],
+      "assumptions": [
+        "Users are mostly second and third year students"
+      ],
+      "next_question": "What would make a student trust a stranger enough to team up?",
+      "question_reason": "Trust is the thing your positioning will have to earn.",
+      "suggested_answers": [
+        "Verified student ID",
+        "Past project history",
+        "A friend vouching"
+      ],
+      "confidence": [
+        {
+          "path": "problem.statement",
+          "level": "high"
+        },
+        {
+          "path": "audience.primary",
+          "level": "high"
+        },
+        {
+          "path": "product.description",
+          "level": "high"
+        }
+      ],
+      "extracted_updates": [
+        {
+          "path": "audience.primary",
+          "values": [
+            "Hackathon teams"
+          ],
+          "evidence": "hackathons and side projects"
+        },
+        {
+          "path": "audience.needs",
+          "values": [
+            "A way to judge reliability before committing"
+          ],
+          "evidence": "hackathons and side projects"
+        },
+        {
+          "path": "product.features",
+          "values": [
+            "Profiles showing past projects",
+            "Reliability signals from previous teammates"
+          ],
+          "evidence": "find reliable teammates"
+        }
+      ]
+    }
+  ]
+}

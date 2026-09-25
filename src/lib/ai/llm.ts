@@ -12,7 +12,7 @@ import {
 import { z } from "zod";
 import { AppError, type ErrorCode } from "@/lib/schemas/errors";
 import { describeError, logEvent } from "@/lib/services/log";
-import type { LlmTrace, ModelTier } from "./types";
+import type { LlmTrace, ModelTier, ReasoningEffort } from "./types";
 
 /*
  * The ONLY place that calls OpenAI (CLAUDE.md). Structured output via AI SDK 7
@@ -35,6 +35,21 @@ const BACKOFF_BASE_MS = 500;
 const MAX_BACKOFF_MS = 8_000;
 const MAX_ISSUES_IN_REPAIR = 20;
 
+/**
+ * Reasoning effort for reasoning models (o-series, gpt-5 and later). Ignored by
+ * the provider on non-reasoning models such as the gpt-4.1 family, so it is
+ * always safe to send. `none` is only accepted by some models (e.g. gpt-6-sol);
+ * the provider warns and drops it elsewhere rather than failing the call.
+ */
+export function reasoningEffortForTier(tier: ModelTier): ReasoningEffort | null {
+  const raw = process.env[tier === "primary" ? "MODEL_PRIMARY_REASONING_EFFORT" : "MODEL_FAST_REASONING_EFFORT"];
+  if (!raw) return null;
+  const value = raw.trim().toLowerCase();
+  if (value === "none" || value === "low" || value === "medium") return value;
+  logEvent("warn", "llm.bad_reasoning_effort", { tier, value });
+  return null;
+}
+
 export interface GenerateStructuredOptions<S extends z.ZodType> {
   /** Agent name, e.g. "interviewer". Used in traces and logs. */
   agent: string;
@@ -47,6 +62,11 @@ export interface GenerateStructuredOptions<S extends z.ZodType> {
   temperature?: number;
   maxTokens?: number;
   promptVersion: string;
+  /**
+   * Per-call override of the tier's reasoning effort, e.g. "none" for the
+   * interviewer's short turns. `null` means "use the tier default".
+   */
+  reasoningEffort?: ReasoningEffort | null;
 }
 
 export interface GenerateStructuredResult<T> {
@@ -167,6 +187,8 @@ export async function generateStructured<S extends z.ZodType>(
   const modelId = modelIdForTier(tier);
   const schemaName = (options.schemaName ?? agent).replace(/[^a-zA-Z0-9_-]/g, "_");
   const sendTemperature = temperature !== undefined && temperatureAllowed();
+  const effort = options.reasoningEffort ?? reasoningEffortForTier(tier);
+  const providerOptions = effort ? { openai: { reasoningEffort: effort } } : undefined;
 
   const startedAt = Date.now();
   let tokensIn: number | null = null;
@@ -225,6 +247,7 @@ export async function generateStructured<S extends z.ZodType>(
         abortSignal: signal,
         ...(maxTokens !== undefined ? { maxOutputTokens: maxTokens } : {}),
         ...(sendTemperature ? { temperature } : {}),
+        ...(providerOptions ? { providerOptions } : {}),
       });
       addUsage(response.usage);
 

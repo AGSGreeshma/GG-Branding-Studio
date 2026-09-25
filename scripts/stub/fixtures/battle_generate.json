@@ -1,0 +1,135 @@
+{
+  "agent": "battle_generate",
+  "tier": "primary",
+  "invalid_first": false,
+  "outputs": [
+    {
+      "directions": [
+        {
+          "id": "a",
+          "lens": "strategist",
+          "name": "The Reliability Record",
+          "positioning": {
+            "category": "Track record platform for student teams",
+            "statement": "A place where students carry a visible record of the projects they actually finished.",
+            "differentiator": "Reliability is evidenced by completed projects and teammate confirmations, not by claims in a profile.",
+            "value_proposition": "Pick teammates on evidence instead of hope."
+          },
+          "audience_focus": "Students who have already been burned by a teammate dropping out",
+          "personality": ["Straight-talking", "Rigorous", "Fair"],
+          "tagline_direction": "Proof over promises: language about what someone has finished, not who they say they are",
+          "strengths": [
+            "Turns the vague fear of an unreliable teammate into something checkable",
+            "Gets stronger the longer a student uses it"
+          ],
+          "risks": [
+            "First-year students with no record look unhireable",
+            "A reliability score can feel like surveillance"
+          ],
+          "why_this_lens": "The sharpest wedge here is evidence of follow-through, which no group chat can offer."
+        },
+        {
+          "id": "b",
+          "lens": "creative_director",
+          "name": "Crew Call",
+          "positioning": {
+            "category": "Casting call for student projects",
+            "statement": "Post the project you want to make and let the right crew answer the call.",
+            "differentiator": "The project comes first and people apply to it, instead of people browsing each other.",
+            "value_proposition": "Describe the thing you want to build and assemble a crew around it."
+          },
+          "audience_focus": "Ambitious students with an idea and no team yet",
+          "personality": ["Energetic", "Ambitious", "Playful", "Direct"],
+          "tagline_direction": "Film-set language: calls, crews, credits and premieres",
+          "strengths": [
+            "Gives the product an identity nothing else on campus has",
+            "Makes starting a project feel like an event rather than admin"
+          ],
+          "risks": [
+            "The metaphor may read as creative-only and put engineers off",
+            "Needs enough projects posted to feel alive"
+          ],
+          "why_this_lens": "A distinctive world makes students want to be seen using it, which is how campus products spread."
+        },
+        {
+          "id": "c",
+          "lens": "audience_advocate",
+          "name": "Nobody Ghosts",
+          "positioning": {
+            "category": "Commitment layer for student group work",
+            "statement": "Teams agree what each person owes the group before the work starts, and the app holds them to it.",
+            "differentiator": "It solves what happens after the team forms, which is where students actually get hurt.",
+            "value_proposition": "Agree who does what up front, so nobody carries the whole project alone."
+          },
+          "audience_focus": "Students stuck in assigned coursework groups they did not choose",
+          "personality": ["Warm", "Practical", "Protective"],
+          "tagline_direction": "Plain, reassuring language about fairness and carrying your share",
+          "strengths": [
+            "Speaks to the pain the founder actually described",
+            "Works even for groups students did not choose"
+          ],
+          "risks": [
+            "Sounds like an admin tool rather than something students want",
+            "Harder to make appealing before a bad experience happens"
+          ],
+          "why_this_lens": "Students do not want a network; they want not to be let down again."
+        }
+      ]
+    },
+    {
+      "directions": [
+        {
+          "id": "a",
+          "lens": "strategist",
+          "name": "Finish Rate",
+          "positioning": {
+            "category": "Completion signal for student projects",
+            "statement": "The only student profile that shows how often you finish what you start.",
+            "differentiator": "One honest number, earned over time, that no CV line can fake.",
+            "value_proposition": "Show you finish, and the good teams come to you."
+          },
+          "audience_focus": "Students who deliver and want it to be visible",
+          "personality": ["Blunt", "Confident", "Numerate"],
+          "tagline_direction": "Scoreboard language, owned by the student rather than imposed on them",
+          "strengths": ["Instantly understandable", "Rewards the students you most want on the platform"],
+          "risks": ["A single number invites gaming", "Punishing for anyone who had one bad semester"],
+          "why_this_lens": "A single legible signal is the fastest way into a crowded campus market."
+        },
+        {
+          "id": "b",
+          "lens": "creative_director",
+          "name": "Build Night",
+          "positioning": {
+            "category": "Campus build culture",
+            "statement": "The place where student projects get started on a Tuesday night and finished by the weekend.",
+            "differentiator": "Built around short, time-boxed builds rather than open-ended team hunting.",
+            "value_proposition": "Find people who want to build the same thing this week."
+          },
+          "audience_focus": "Hackathon-minded students who work in bursts",
+          "personality": ["Kinetic", "Informal", "Optimistic", "Communal"],
+          "tagline_direction": "Late-night making, pizza, deadlines and shipping",
+          "strengths": ["Natural fit with hackathon culture", "Creates repeatable moments to market around"],
+          "risks": ["Excludes semester-long coursework", "Depends on local density of active students"],
+          "why_this_lens": "Culture, not features, is what makes students bring their friends."
+        },
+        {
+          "id": "c",
+          "lens": "audience_advocate",
+          "name": "Fair Share",
+          "positioning": {
+            "category": "Workload fairness for group assignments",
+            "statement": "Every group project starts with a shared agreement about who carries what.",
+            "differentiator": "Designed for the assigned group nobody chose, which is where most of the pain sits.",
+            "value_proposition": "Make the split explicit before resentment sets in."
+          },
+          "audience_focus": "Students in mandatory coursework groups",
+          "personality": ["Calm", "Even-handed", "Supportive"],
+          "tagline_direction": "Language about fairness, clarity and carrying your share",
+          "strengths": ["Addresses the stated pain directly", "Useful from the first minute, with no network needed"],
+          "risks": ["Feels like paperwork", "Little reason to open it between projects"],
+          "why_this_lens": "The audience's real fear is being left carrying the work, not being unable to find people."
+        }
+      ]
+    }
+  ]
+}

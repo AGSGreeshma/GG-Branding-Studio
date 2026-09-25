@@ -1,0 +1,41 @@
+{
+  "agent": "orchestrator",
+  "tier": "fast",
+  "invalid_first": false,
+  "outputs": [
+    {
+      "steps": [
+        {
+          "module": "brand_battle",
+          "reason": "Three strategists will argue over how to position a teammate-finding app, so you can pick rather than guess.",
+          "skip": false,
+          "skip_reason": ""
+        },
+        {
+          "module": "five_worlds",
+          "reason": "The same strategy can feel like a study tool or a club — you should see both before deciding.",
+          "skip": false,
+          "skip_reason": ""
+        },
+        {
+          "module": "anti_generic",
+          "reason": "Student products drift into \"connect, collaborate, succeed\" language; this step attacks that.",
+          "skip": false,
+          "skip_reason": ""
+        },
+        {
+          "module": "brand_builder",
+          "reason": "Your decisions about trust and reliability become one consistent Brand System.",
+          "skip": false,
+          "skip_reason": ""
+        },
+        {
+          "module": "launch_kit",
+          "reason": "You leave with copy you could post to a campus group tomorrow.",
+          "skip": false,
+          "skip_reason": ""
+        }
+      ]
+    }
+  ]
+}

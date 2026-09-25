@@ -4,6 +4,12 @@ import type { ErrorCode } from "@/lib/schemas/errors";
 export type ModelTier = "primary" | "fast";
 
 /**
+ * How hard a reasoning model should think before answering. Only the values the
+ * hackathon uses; the provider supports more (plan §20.2, ADR-017).
+ */
+export type ReasoningEffort = "none" | "low" | "medium";
+
+/**
  * One model call as recorded in `workflow_runs` (CLAUDE.md, AI rule 10).
  * llm.ts returns it; callers persist it with recordRun so agents stay pure.
  */

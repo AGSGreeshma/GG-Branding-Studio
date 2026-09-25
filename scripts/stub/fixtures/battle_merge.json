@@ -1,0 +1,33 @@
+{
+  "agent": "battle_merge",
+  "tier": "primary",
+  "invalid_first": false,
+  "outputs": [
+    {
+      "direction": {
+        "id": "merged",
+        "lens": "strategist",
+        "name": "The Reliability Record",
+        "positioning": {
+          "category": "Track record platform for student teams",
+          "statement": "Students build a visible record of the projects they finished, and start each new one by agreeing who carries what.",
+          "differentiator": "Evidence of past follow-through plus an explicit agreement at the start of every project.",
+          "value_proposition": "Pick teammates on evidence, then make the split explicit before the work begins."
+        },
+        "audience_focus": "Students who have been let down by a teammate and want that not to happen again",
+        "personality": ["Straight-talking", "Fair", "Practical", "Protective"],
+        "tagline_direction": "Proof and fairness: what you finished, and what you owe this team",
+        "strengths": [
+          "Useful in the very first project, before any record exists",
+          "The record and the agreements reinforce each other over time"
+        ],
+        "risks": [
+          "Two ideas in one can blur the pitch",
+          "The agreement step adds friction at the moment a team is most excited"
+        ],
+        "why_this_lens": "The record is the wedge; the agreement is what makes it useful on day one."
+      },
+      "merge_note": "Kept the evidence-based record from A as the core claim and took the start-of-project agreement from C to solve A's cold-start problem. Dropped C's framing as an admin layer."
+    }
+  ]
+}

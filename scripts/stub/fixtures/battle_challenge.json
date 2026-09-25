@@ -1,0 +1,93 @@
+{
+  "agent": "battle_challenge",
+  "tier": "fast",
+  "invalid_first": true,
+  "invalid_output": {
+    "critiques": [
+      {
+        "direction_id": "a",
+        "scores": { "audience_fit": 8, "clarity": 9 },
+        "verdict": "Strong but unproven."
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "critiques": [
+        {
+          "direction_id": "a",
+          "scores": {
+            "audience_fit": 8,
+            "clarity": 9,
+            "distinctiveness": 8,
+            "specificity": 9,
+            "strategic_strength": 8,
+            "genericity_risk": 2
+          },
+          "objections": [
+            {
+              "claim": "A record only exists after students have already used the product, so the first term offers nothing to judge anyone on.",
+              "evidence": "Reliability is evidenced by completed projects and teammate confirmations"
+            },
+            {
+              "claim": "Students may read a visible record as a permanent punishment for one bad semester.",
+              "evidence": "students carry a visible record of the projects they actually finished"
+            }
+          ],
+          "cliches": [],
+          "verdict": "The sharpest wedge of the three, but it has a real cold-start problem."
+        },
+        {
+          "direction_id": "b",
+          "scores": {
+            "audience_fit": 6,
+            "clarity": 7,
+            "distinctiveness": 9,
+            "specificity": 6,
+            "strategic_strength": 7,
+            "genericity_risk": 3
+          },
+          "objections": [
+            {
+              "claim": "The casting metaphor says nothing about reliability, which is the problem the founder actually described.",
+              "evidence": "Post the project you want to make and let the right crew answer the call."
+            },
+            {
+              "claim": "Film language may signal creative projects and quietly exclude the engineering students this needs.",
+              "evidence": "Film-set language: calls, crews, credits and premieres"
+            }
+          ],
+          "cliches": ["the right crew"],
+          "verdict": "The most distinctive world, but it solves finding people rather than trusting them."
+        },
+        {
+          "direction_id": "c",
+          "scores": {
+            "audience_fit": 9,
+            "clarity": 8,
+            "distinctiveness": 5,
+            "specificity": 7,
+            "strategic_strength": 6,
+            "genericity_risk": 5
+          },
+          "objections": [
+            {
+              "claim": "Any group-work tool could claim to make expectations explicit; nothing here is hard to copy.",
+              "evidence": "Teams agree what each person owes the group before the work starts"
+            },
+            {
+              "claim": "Students rarely adopt a tool that feels like homework administration before the trouble starts.",
+              "evidence": "Commitment layer for student group work"
+            }
+          ],
+          "cliches": ["commitment layer", "carrying your share"],
+          "verdict": "Closest to the stated pain, and the easiest of the three for a competitor to copy."
+        }
+      ],
+      "recommendation": {
+        "direction_id": "a",
+        "reason": "It is the only direction whose differentiator gets stronger with use, and its cold-start problem is fixable with a first-term onboarding."
+      }
+    }
+  ]
+}
