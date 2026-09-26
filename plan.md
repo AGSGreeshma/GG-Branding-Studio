@@ -4,22 +4,22 @@
 
 This is the founder's product plan and the **source of truth for what to build**. Working rules for the coding AI live in `CLAUDE.md`. This plan is intentionally comprehensive but not assumed to be perfect. Enrich it as described in `CLAUDE.md`, marking additions with `> Added:`.
 
-## 0. Hackathon mode (read first)
+## 0. Portfolio mode (read first)
 
-> Added 2026-09-24. This is a **36-hour hackathon**. Submission deadline: **Friday 25 September 2026, 22:00 IST**. Target: everything submitted by **21:00 IST**.
+> Changed 2026-09-26 (ADR-022). The hackathon this project started in was withdrawn from. GG Branding Studio is now a **portfolio project with no deadline**: something to show, use and keep improving. Working rules are in `CLAUDE.md`; the roadmap is §22.1.
 
-- **Team:** solo builder. Every capability is built as its thinnest real version (§22.1, ADR-008).
+- **No deadline, no time boxes.** Depth beats speed. A capability is finished when it is genuinely good, not when the clock runs out.
+- **v1 already works end to end** (Stage A: idea → interview → Brand Battle → decision). The "lite" scope from ADR-008 was the starting point; §22.1 M2 grows each capability to its full design.
+- **The live URL is the portfolio piece.** A visitor with no account must be able to open it, try the real thing in one click, and see a finished example project without spending anything.
+- **Cost protection is a feature, not an afterthought.** The URL is public: rate limits, per-project AI call caps, the cheap tier wherever quality allows.
+- **Claims about AI quality must be measurable.** The eval harness (§21) and its published results are how this project argues that its output is better than one-prompt generation.
 - **Stack (decided):** Next.js full-stack TypeScript on Vercel, Postgres (Neon) with Drizzle, OpenAI through the Vercel AI SDK with Zod structured outputs (§20).
-- **Scope:** build only what §22.1 marks MUST, then SHOULD. Everything marked *post-hackathon* stays in this plan as the product vision but is not built now.
-- **Priority order:** a working live demo path > visible AI workflow (critique, scores, "How the AI worked") > all eight capabilities present > polish.
-- **Time-boxing:** if a task runs 50% over its box, ship the simpler version and note it in the Decision Log.
-- **Deploy from hour 2 onward** and keep production working; never leave `main` broken.
-- **Feature freeze:** 25 Sept, 16:00 IST. After that: bug fixes, README, demo video, social posts, submission forms only.
+- **What this is not:** a submission, a race, or a demo that only works on rails. Everything in the plan is either built, on the roadmap, or explicitly out of scope (§26).
 
 
 ## Contents
 
-0. Hackathon mode (read first)
+0. Portfolio mode (read first)
 1. Task documentation
 2. Product vision
 3. Core architecture
@@ -42,8 +42,8 @@ This is the founder's product plan and the **source of truth for what to build**
 20. Tech stack, environment, deployment
 21. Evaluation harness & edge cases
 22. Implementation task tree
-23. Demo & hackathon alignment
-24. Hackathon submission checklist
+23. Demo path & product story
+24. Cost, access & public-URL protection
 25. Definition of complete & acceptance criteria
 26. Non-goals
 27. Decision log
@@ -100,7 +100,7 @@ Expand a task with this template when you start it (in this file under §22, or 
 ## 2. Product vision
 
 **Name:** GG Branding Studio
-**Working tagline:** *Build a brand that can think.* (placeholder; this is also the hackathon handbook's headline, so consider a more distinctive final tagline and run it through the Anti-Generic Engine)
+**Working tagline:** *Build a brand that can think.* (placeholder — run it through the Anti-Generic Engine and pick something the product itself would approve of)
 
 **Product statement:** An adaptive AI branding studio for founders and brand builders at every stage, from rough idea to launch-ready brand, and from existing brand to continuous improvement. It combines discovery, analysis, positioning, audience exploration, strategic debate, creative exploration, genericity detection, brand construction, launch generation and consistency checking into one intelligent workflow.
 
@@ -206,7 +206,7 @@ The landing page asks **"Where are you with your brand?"** The answer is *starti
 | **C — I have a brand** | Wants to improve, reposition or strengthen an existing brand | `existing_brand` | Brand Doctor, Brand Battle, Audience Shifter, Five Worlds, Anti-Generic, Brand Builder, Consistency Guardian |
 | **D — I want to protect my brand** | Wants future content, campaigns and messaging checked | `active_brand` | Consistency Guardian, Brand Doctor, Anti-Generic |
 
-> Hackathon build (Stage D lite): the user pastes existing guidelines/copy, and the Consistency Guardian checks new content against that text directly. The draft-system extraction below is post-hackathon.
+> v1 build (Stage D lite, ADR-008): the user pastes existing guidelines/copy, and the Consistency Guardian checks new content against that text directly. The draft-system extraction below is M2.
 
 > Added: **Stage D bootstrap.** A Stage D user has no Brand System in GG yet. Onboarding asks them to paste or upload existing guidelines/copy; Brand Doctor extracts a *draft* Brand System (voice, personality, messaging rules) that the user confirms before the Consistency Guardian can use it.
 
@@ -287,7 +287,7 @@ Its plan and reasons are stored and shown in the Workflow Sidebar.
 4. On validation failure: one repair attempt with the errors, then fall back to the **default plan** for the entry stage (§7.5). The fallback is logged and visible.
 5. **Re-planning triggers:** after each module completes, after each user decision, when evaluation scores fall below thresholds (§13.5), or when the user asks ("go back to positioning").
 
-> **Hackathon build (orchestrator lite, ADR-008):** use the §7.5 default plan for the entry stage; one `MODEL_FAST` call writes a short user-facing reason for each step (shown in the sidebar) and may drop steps whose outputs already exist in the Brand Context. The code validator still runs (locks, required fields, Builder before Launch Kit). Full LLM-proposed planning and re-planning are post-hackathon.
+> **v1 build (orchestrator lite, ADR-008, shipped):** use the §7.5 default plan for the entry stage; one `MODEL_FAST` call writes a short user-facing reason for each step (shown in the sidebar) and may drop steps whose outputs already exist in the Brand Context. The code validator still runs (locks, required fields, Builder before Launch Kit). Full LLM-proposed planning and re-planning are M2 (I2, I4, I7–I9, I13).
 
 ### 7.4 Interview completion rule
 > Added: the Interviewer ends when `confidence ≥ 0.7` for problem, primary audience and product description, **or** after 6 questions, **or** when the user clicks "That's enough, continue." Low-confidence fields are carried forward as explicit assumptions shown in the Brand Context panel.
@@ -494,7 +494,7 @@ Internal signals unless the UI explicitly defines what they mean.
 > Added: concrete loop rules.
 > - Evaluation is done by a separate critic call (fast model, low temperature) with a written rubric, plus deterministic lexicon checks (§14.6).
 > - **Trigger revision** when `genericity_risk ≥ 5`, or `distinctiveness ≤ 6`, or `audience_fit ≤ 6`, or any high-severity lexicon hit.
-> - Revise **only** the flagged fields; never locked ones. **Max 2 revision rounds** (hackathon: **1**), then present the best version with remaining concerns stated.
+> - Revise **only** the flagged fields; never locked ones. **Max 2 revision rounds** (v1 ships **1**; the second round is M2), then present the best version with remaining concerns stated.
 > - Store before/after and score deltas; show them in the "How the AI worked" drawer.
 > - Thresholds are tuned with the eval harness (§21) and recorded in the Decision Log.
 
@@ -539,22 +539,22 @@ Adaptive, not a fixed list of 20 questions.
 **Output:** Directions A, B, C, each with positioning, audience, personality, strengths, weaknesses, risks, opportunities.
 **User actions:** Choose A · Choose B · Choose C · Combine · Ask AI to revise · Generate another battle. The selection is written to `selected_direction`.
 
-> **Hackathon build: Brand Battle Lite (ADR-008).** Two calls instead of five.
+> **v1 build: Brand Battle Lite (ADR-008, shipped).** Two calls instead of five, and since ADR-023 they are two separate workflow steps.
 > 1. **Generate** (`MODEL_PRIMARY`, temperature ~0.9): one call returns three directions, each written from a named lens (Strategist, Creative Director, Audience Advocate) with positioning, audience, personality, strengths and risks.
 > 2. **Challenge** (`MODEL_FAST`, temperature ~0.2): one call acting as Skeptic + Differentiation Expert critiques all three, scores them (§13.5), flags clichés and weak assumptions, and gives a short recommendation (replaces the separate synthesis step).
 > A code check confirms the three directions differ in audience focus or category; if two collide, regenerate once. The UI labels each card with its lens and shows the critic's objections under it. Expected runtime 15–25 s.
 >
-> Post-hackathon: **execution design.** Round 1: Strategist, Creative Director and Audience Advocate each propose a direction in parallel. Round 2: Skeptic and Differentiation Expert critique all three in parallel. Round 3: Synthesis produces the final A/B/C with the critiques addressed or stated as risks. Divergence check in code: the three directions must differ in audience focus or category; otherwise regenerate the duplicate. Each agent's contribution is visible in the Battle view.
+> M2: **full execution design.** Round 1: Strategist, Creative Director and Audience Advocate each propose a direction in parallel. Round 2: Skeptic and Differentiation Expert critique all three in parallel. Round 3: Synthesis produces the final A/B/C with the critiques addressed or stated as risks. Divergence check in code: the three directions must differ in audience focus or category; otherwise regenerate the duplicate. Each agent's contribution is visible in the Battle view.
 
 ### 14.4 Audience Shifter
-> Hackathon build: one call, three audiences, shown as a tab next to the Brand Battle results.
+> v1 build (M2 work): one call, three audiences, shown as a tab next to the Brand Battle results.
 
 Explores different audiences without changing the product (e.g. Students → A, Professionals → B, Companies → C).
 **Per audience:** profile, core need, value proposition, messaging, benefits, voice, positioning, risks.
 > Added: a fixed "invariant value" line (what stays the same for all audiences) is shown at the top, making the "protect the underlying value" requirement visible.
 
 ### 14.5 One Idea, Five Worlds (identity exploration)
-> Hackathon build: **3 worlds** in one call (ADR-008). Keep the name; the UI can offer "Explore 2 more worlds" post-hackathon.
+> v1 build: **3 worlds** in one call (ADR-008, M1). Keep the name; M2 restores all five and the UI offers "Explore 2 more worlds".
 
 **Answers:** *"What could this brand feel and look like in different identity directions?"* Worlds selected dynamically (e.g. Technical, Playful, Editorial, Premium, Bold). Runs **after** a strategic direction is chosen and inherits it.
 **Per world:** positioning, personality, naming direction, tagline direction, voice, visual mood, audience perception, risks, opportunities.
@@ -693,7 +693,7 @@ Brand System
 
 | Table | Fields |
 |---|---|
-| `users` | id, email, name, created_at, updated_at *(post-hackathon; hackathon mode uses `projects.owner_id` = guest cookie ID)* |
+| `users` | id, email, name, created_at, updated_at *(M4; today `projects.owner_id` = the guest cookie ID)* |
 | `projects` | id, user_id, name, entry_stage, brand_state, status, created_at, updated_at |
 | `brand_context` | id, project_id, context_json, version, created_at |
 | `workflow_runs` | id, project_id, module, stage, status, input_context, output_context, created_at, completed_at |
@@ -703,7 +703,7 @@ Brand System
 | `consistency_checks` | id, project_id, content, result, suggestions, created_at |
 
 > Added:
-> - `projects`: `owner_id` (guest cookie ID in hackathon mode).
+> - `projects`: `owner_id` (the guest cookie ID, ADR-005).
 > - `users`: `password_hash`, `is_guest`.
 > - `projects`: `workflow_state`, `current_plan_json`, `share_slug` (nullable, for read-only share links), `archived_at`.
 > - `workflow_runs`: `agent`, `model`, `prompt_version`, `tokens_in`, `tokens_out`, `latency_ms`, `retry_count`, `error_code`, `evaluation_json`, `parent_run_id` (Brand Battle sub-agents).
@@ -815,7 +815,7 @@ Codes: `VALIDATION_ERROR` (422) · `UNAUTHORIZED` (401) · `FORBIDDEN` (403) · 
 ### 18.6 Authentication
 Full vision: sign up, login, logout, session management; a user's projects belong to that user; users never access another user's project.
 
-> Hackathon mode (ADR-005): **guest identity only.** On first visit the server sets a signed, httpOnly, secure, SameSite=Lax cookie `gg_uid` (random UUID). `projects.owner_id` = that ID and every query is scoped by it, so users still cannot see each other's projects. Share links (`/share/[slug]`) are read-only. Accounts with "Save my work" (e.g. Auth.js or Supabase Auth) are *post-hackathon* (B1–B6).
+> Today (ADR-005): **guest identity only.** On first visit the server sets a signed, httpOnly, secure, SameSite=Lax cookie `gg_uid` (random UUID). `projects.owner_id` = that ID and every query is scoped by it, so users still cannot see each other's projects. Share links (`/share/[slug]`) are read-only. Accounts with "Save my work" (e.g. Auth.js or Supabase Auth) are M4 (B1–B6).
 
 
 ## 19. Security, performance, observability
@@ -842,9 +842,9 @@ Full vision: sign up, login, logout, session management; a user's projects belon
 | App | Next.js (latest stable, App Router) + TypeScript strict | One language, one repo, one deploy; no CORS; server and client share Zod schemas |
 | UI | Tailwind + shadcn/ui, lucide icons | Polished card-based UI quickly |
 | AI | OpenAI via Vercel AI SDK (`ai`, `@ai-sdk/openai`): `generateObject` / `streamObject` with Zod | Structured outputs validated at the boundary; streaming built in |
-| DB | Postgres on Neon (via Vercel Marketplace) + Drizzle ORM (`drizzle-kit push`) | Free tier, JSONB for context, no migration ceremony during the hackathon |
+| DB | Postgres on Neon (via Vercel Marketplace) + Drizzle ORM (`drizzle-kit push`) | Free tier, JSONB for context; `push` suits a single-developer schema that is still moving |
 | State | Zustand (`brand-store`) + fetch/streams | Minimal client state |
-| Tests | Vitest (unit: lexicon, lock enforcement, plan validator, schemas) | Fast; full E2E is post-hackathon |
+| Tests | Vitest (unit: lexicon, lock enforcement, plan validator, schemas) | Fast; browser-level E2E is M3 (V9) |
 | Hosting | Vercel (preview + production from GitHub) | Deploy in minutes; judges get a stable URL |
 | Package manager | pnpm | |
 
@@ -861,7 +861,7 @@ Why not FastAPI + React: two languages, two deployments, CORS, and duplicated ty
 > - `gpt-6-sol` and `gpt-6-luna` **are** handled correctly: both are known model ids, both are detected as reasoning models, and both accept a reasoning effort of `none`, `low`, `medium`, `high`, `xhigh` or `max`.
 > - For any `gpt-6*` model the provider **drops `temperature`** (with a warning), even at effort `none`, because `supportsNonReasoningParameters` is false. The generator-vs-critic temperature split (0.9 vs 0.2, §13.5) therefore has no effect on gpt-6 models.
 > - Setting a reasoning effort also makes the provider request a `detailed` reasoning summary by default, which costs output tokens.
-> - **Recommendation while the account has no gpt-6 access:** keep `MODEL_PRIMARY=gpt-4.1`, `MODEL_FAST=gpt-4.1-mini` and `OPENAI_OMIT_TEMPERATURE=0`, so the critics really do run cold. The account's model list (checked 2026-09-25) reaches gpt-5.4 but not gpt-6.
+> - **Recommendation, updated 2026-09-26 with eval evidence** (`evals/results/summary.md`, 12 runs, all scored by the same `gpt-6-luna` critic): `gpt-5.4` and `gpt-6-sol` produce the most distinctive, least generic directions (distinctiveness 7.2 / 6.8, genericity risk 4.8 / 4.7); `gpt-4.1` is the weakest despite being the only family that honours the temperature split (distinctiveness 6.3, genericity risk 6.4, and three times as many clichés as `gpt-6-sol`). Generation latency runs 7.6–17.6 s and the critique 4.8–13.7 s, all comfortably inside one step's `maxDuration` (ADR-023). No configuration needed a schema repair retry.
 > - `MODEL_PRIMARY_REASONING_EFFORT` / `MODEL_FAST_REASONING_EFFORT` are optional and ignored by the gpt-4.1 family, so they can stay set when switching models.
 
 ### 20.3 Environment variables
@@ -898,7 +898,7 @@ pnpm record:demo  # save a good live run to src/demo/recorded-run.json
 
 ### 20.5 Deployment
 - Connect the GitHub repo to Vercel in **Phase 1**. Add Neon from the Vercel Marketplace (sets `DATABASE_URL`). Add all env vars to Production and Preview.
-- `pnpm db:push` against production once schemas change (hackathon mode, no migration files).
+- `pnpm db:push` against production once schemas change. Generated migration files become worthwhile if a second environment or contributor appears.
 - `/api/health` checks DB connectivity and that the OpenAI key and models are configured.
 - Seed the demo project in production (`pnpm seed:demo`) and link it as "See an example" on the landing page.
 
@@ -909,9 +909,14 @@ pnpm record:demo  # save a good live run to src/demo/recorded-run.json
 ## 21. Evaluation harness & edge cases
 
 ### 21.1 Evaluation harness
-> Added. Evidence for the 25% "thoughtful evaluation" criterion.
-- `evals/fixtures/`: 12 inputs, 3 per entry stage (hackathon mode: 5 — three Stage A, one Stage C, one bad social post; deferred in solo mode, ADR-008), including hard cases: very vague idea, contradictory answers, non-English input, an existing brand full of buzzwords, a social post in the wrong voice.
-- `pnpm eval` runs each fixture headless through its default plan with scripted user choices and writes `evals/results/summary.md`.
+> Added. This is how the project argues, with evidence rather than screenshots, that an adaptive multi-agent workflow beats one-prompt branding (§0).
+- `evals/fixtures/`: 12 inputs, 3 per entry stage, including hard cases: very vague idea, contradictory answers, non-English input, an existing brand full of buzzwords, a social post in the wrong voice. Started 2026-09-26 with three Stage A ideas for the Battle comparison (ADR-025); the rest arrive with M3.
+- `pnpm eval` (M3) runs each fixture headless through its default plan with scripted user choices and writes `evals/results/summary.md`.
+- **`pnpm eval:battle` (built 2026-09-26, ADR-025)** compares model configurations on the Brand Battle, the most expensive and most judgeable step:
+  - `evals/configs.ts` lists the configurations (generator model, critic model, temperature handling, reasoning effort); `evals/fixtures/battle/` holds the ideas, each with a `why_this_fixture` note.
+  - `--configs`, `--fixtures`, `--judge <model>` and `--dry-run`. **`--judge` matters:** without it each configuration scores its own output, which compares a model against itself.
+  - Metrics per run: critic scores averaged over the three directions, clichés and objections counted, the deterministic divergence check (distinct categories and audiences out of three), obvious ideas rejected per direction (ADR-026), schema repair retries, latency and tokens per call.
+  - Raw JSON per run stays local; `evals/results/summary.md` is committed and is the table the README will carry.
 - **Metrics:** schema validity rate · retries per run · lexicon hits before vs after Anti-Generic · critic scores before vs after revision · Brand Builder conflicts found · lock violations (**must be 0**) · Consistency Guardian detection rate on seeded bad posts · latency p50/p95 per module · tokens per run.
 - The README and demo show the summary table.
 
@@ -939,23 +944,23 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 
 **B. Authentication:** B1 Registration · B2 Login · B3 Logout · B4 Session persistence · B5 Protected routes · B6 User/project authorization · [~] B7 Guest mode + "save my work" (new)
 
-**C. Project management:** [x] C1 Create · [x] C2 List · [x] C3 Open · C4 Rename (auto-named from the interview; manual rename post-hackathon) · C5 Delete/archive · [x] C6 Save project state · C7 Project dashboard
+**C. Project management:** [x] C1 Create · [x] C2 List · [x] C3 Open · C4 Rename (auto-named from the interview; manual rename in M3) · C5 Delete/archive · [x] C6 Save project state · C7 Project dashboard
 
 **D. Stage selection:** [x] D1 Stage selector UI · [x] D2 Stage descriptions · [x] D3 Stage selection state · [x] D4 Project initialization · [x] D5 Initial AI context · D6 Stage D bootstrap flow (new)
 
 **E. Workspace:** [x] E1 Layout · [x] E2 Workflow sidebar · [x] E3 AI conversation (interview cards) · [x] E4 Brand Context panel · [x] E5 Decision cards · [x] E6 Result cards · [x] E7 Loading states · [x] E8 Error states · [x] E9 Responsive workspace · [x] E10 Streaming client hook (new) · [x] E11 "How the AI worked" drawer (new) · [x] E12 Empty states (new)
 
-**F. AI foundation:** [x] F1 LLM provider abstraction · [x] F2 AI request service · [x] F3 Prompt registry · [x] F4 Structured output parser · [x] F5 Schema validation · [x] F6 Retry mechanism · [x] F7 Error handling · [~] F8 Token/context management · [x] F9 AI logging · [~] F10 Critic/evaluator service (new — the Battle critic scores per §13.5; a shared service comes with Anti-Generic) · F11 Eval harness (new)
+**F. AI foundation:** [x] F1 LLM provider abstraction · [x] F2 AI request service · [x] F3 Prompt registry · [x] F4 Structured output parser · [x] F5 Schema validation · [x] F6 Retry mechanism · [x] F7 Error handling · [~] F8 Token/context management · [x] F9 AI logging · [~] F10 Critic/evaluator service (new — the Battle critic scores per §13.5; a shared service comes with Anti-Generic) · [~] F11 Eval harness (new — `pnpm eval:battle` built, ADR-025; the full run is M3)
 
 **G. Brand Context:** [x] G1 Schema · [x] G2 Storage · [x] G3 Retrieval · [x] G4 Updates · [x] G5 Versioning · [x] G6 Locked decisions (enforced in code on every write; Lock offered when a direction is chosen) · [x] G7 Display · [~] G8 Provenance & stale detection (new — provenance written, stale detection later) · [x] G9 Optimistic concurrency (new)
 
 **H. Brand Interviewer:** [x] H1 Prompt · [x] H2 Question generation · [x] H3 Answer extraction · [x] H4 Missing-info detection · [x] H5 Assumption detection · [x] H6 Completion detection · [x] H7 API · [x] H8 UI (with suggested-answer chips) · [x] H9 Context integration · [x] H10 Testing · [x] H11 Content-policy check (new)
 
-**I. Workflow Orchestrator:** [x] I1 Workflow schema · [~] I2 Planner (lite: AI writes the reasons, code owns the plan — ADR-008) · [x] I3 Module registry · [~] I4 Module selection (registry-driven skip; full selection is post-hackathon) · [x] I5 Executor · [x] I6 Context passing · I7 Dynamic branching · I8 Stage repetition · I9 Completion · [x] I10 Logging · [x] I11 Testing · [x] I12 Plan validator + default-plan fallback (new) · I13 Re-planning triggers (new) · [x] I14 State-transition rules (new)
+**I. Workflow Orchestrator:** [x] I1 Workflow schema · [~] I2 Planner (lite: AI writes the reasons, code owns the plan — ADR-008) · [x] I3 Module registry · [~] I4 Module selection (registry-driven skip; full selection is M2) · [x] I5 Executor · [x] I6 Context passing · I7 Dynamic branching · I8 Stage repetition · I9 Completion · [x] I10 Logging · [x] I11 Testing · [x] I12 Plan validator + default-plan fallback (new) · I13 Re-planning triggers (new) · [x] I14 State-transition rules (new)
 
 **J. Brand Doctor:** J1 Product analysis · J2 Brand analysis · J3 Strengths · J4 Weaknesses · J5 Contradictions · J6 Audience mismatch · J7 Genericity analysis · J8 Recommendations · J9 API · J10 UI · J11 Evidence + fact/interpretation labels (new) · J12 Draft Brand System extraction (new)
 
-**K. Brand Battle:** [x] K1 Strategist · [x] K2 Creative Director · [x] K3 Audience Advocate · [x] K4 Skeptic · [x] K5 Differentiation agent · K6 Parallel generation (*one call covers all three lenses in Lite*) · [~] K7 Debate/synthesis (Combine merges two directions; the 5-agent debate is post-hackathon) · [x] K8 Direction evaluation · [x] K9 API · [x] K10 UI · [x] K11 User selection · [x] K12 Direction persistence · [x] K13 Divergence check (new)
+**K. Brand Battle:** [x] K1 Strategist · [x] K2 Creative Director · [x] K3 Audience Advocate · [x] K4 Skeptic · [x] K5 Differentiation agent · K6 Parallel generation (*one call covers all three lenses in Lite; true parallel agents are M2*) · [~] K7 Debate/synthesis (Combine merges two directions; the 5-agent debate is M2) · [x] K8 Direction evaluation · [x] K9 API · [x] K10 UI · [x] K11 User selection · [x] K12 Direction persistence · [x] K13 Divergence check (new)
 
 **L. Audience Shifter:** L1 Audience discovery · L2 Profile · L3 Value proposition · L4 Positioning · L5 Messaging · L6 Comparison · L7 UI · L8 Selection
 
@@ -989,38 +994,54 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 
 **SUB. Submission (new):** SUB1 README (problem, workflow diagram, agents, eval table, setup, disclosure of reused code/AI tools) · SUB2 Public repo check · SUB3 Demo video · SUB4 Final acceptance run on production
 
-### 22.1 Solo hackathon sprint plan (deadline 25 Sept 2026, 22:00 IST)
+### 22.1 Roadmap
 
-> Changed 2026-09-24 (ADR-007, ADR-008): one builder, about a day left. Every capability is kept but built as its thinnest real version (mostly one AI call each). Hours are focused working hours; fill in real clock times.
+> Changed 2026-09-26 (ADR-022): the 36-hour sprint plan is replaced by milestones with no dates. ADR-008's "lite" versions stay as the built floor; M2 grows them to the full design in §14. Nothing here is time-boxed — a milestone is done when its capabilities actually work and are tested.
 
-#### Scope
+**Where v1 stands.** Stage A runs end to end: a visitor picks "I have an idea", the Brand Interviewer fills the Brand Context, the orchestrator writes and validates a plan, Brand Battle produces three role-labelled directions with a critic's scores and objections, and the user's choice is written back to the context with provenance and an optional lock. Every model call is traced in `workflow_runs`.
 
-**MUST (the live demo path, Stage A):**
-- Foundation: A1–A6, A11, A12 · guest cookie (§18.6)
-- AI core: F1–F9 · Brand Context: G1–G4, G6 · Stage selection: D1–D5
-- Workspace: E1–E8, E10, E11 (simple "How the AI worked" list)
-- Interviewer: H1–H9
-- Orchestrator (lite, §7.3): I1, I3, I5, I6, I14 + default plans with AI-written reasons
-- **Brand Battle Lite** (§14.3): 2 calls; K9–K12 (API, UI, selection, persistence)
-- Five Worlds: M1–M10 with **3 worlds**, one call
-- Anti-Generic: N1–N3, N9, N10, N12, N13 with **one** revision round
-- Brand Builder: O1–O12 in one call + relationship checks in its output
-- Brand System UI: P1–P12 (read, edit, lock)
-- Launch Kit: Q1–Q9, one call
-- Consistency Guardian: R1–R11, one call
-- Export: U4 (copy), U7 (Markdown)
-- Deploy: Z1–Z6
+#### M1 — finish the core loop
 
-**SHOULD (so all eight capabilities genuinely work):**
-- Brand Doctor: J1–J8, J11, one call, pasted text, for Stage B and C
-- Audience Shifter: L1–L8, one call, shown as a tab beside the Battle results
-- Stage D lite: user pastes existing guidelines/copy; the Guardian checks content against that text directly
+The Stage A journey from a chosen direction to something the user can publish and defend.
 
-**Post-hackathon:** full 5-agent Brand Battle, AI-proposed plans + validator + re-planning (I2, I4, I7–I13), 2-round revision loop, 5 worlds, eval harness (F11), demo-mode replay (Z7), share links (U5), version history UI (P14–P15), Stage D draft-system extraction (D6, J12), accounts (B1–B6), files/websites (S), image generation (T8), PDF (U3), broad tests.
+- **Five Worlds** (M1–M10): identity exploration from the chosen direction, 3 worlds to start, with palette swatches, a font sample and a headline per world.
+- **Anti-Generic Engine** (N1–N13): deterministic lexicon (`lib/lexicon`) + critic call, revision of flagged fields only, before/after stored and shown.
+- **Brand Builder** (O1–O12): the decisions become one Brand System, with the relationship checks in its own output.
+- **Brand System UI** (P1–P13): read, edit, lock every part of the system.
+- **Founder-to-Launch Kit** (Q1–Q9) and **Consistency Guardian** (R1–R11) with inline highlights and a suggested revision.
+- **Export** (U4, U7): copy to clipboard, Markdown.
+- **Cost protection** (W6, W11, X5): rate limiting, per-project AI call caps, and the cheap tier wherever it does not cost quality. This ships with M1, not after it — the URL is public.
 
-**Tests kept:** lexicon detection, lock enforcement, schema validation of each agent output (fake model), owner scoping. Run the demo path by hand before every push to `main`.
+#### M2 — all eight capabilities at full strength
 
-#### Status
+- **Brand Battle, full five agents** (K1–K7): Strategist, Creative Director and Audience Advocate in parallel; Skeptic and Differentiation Expert critiquing in parallel; a synthesis round. Each agent's contribution visible in the Battle view.
+- **Five Worlds → five worlds** (M1), with "explore two more".
+- **Two-round critique** (§13.5, N13): the hackathon limit of one revision round becomes two, with score deltas per round.
+- **Brand Doctor** (J1–J12) for Stages B and C, including the Stage D draft Brand System extraction (D6, J12).
+- **Audience Shifter** (L1–L8) as a real comparison tab beside the Battle results (§14.4).
+- **Stage D bootstrap** (D6): paste existing guidelines or copy, confirm the drafted rules, then guard against them.
+- **AI-proposed planning** (I2, I4, I7–I9, I13): the planner proposes the module sequence itself, the §7.3 validator keeps it honest, and re-planning triggers fire after decisions and low scores.
+
+#### M3 — portfolio polish
+
+This is what turns a working app into a portfolio piece.
+
+- **Eval harness with published results** (F11, §21): fixtures per entry stage, model comparison, scored runs, `evals/results/summary.md` committed and linked from the README.
+- **"How the AI worked" drawer** (E11) in full: per step, the agents involved, the prompts' versions, scores, critique findings and before/after revisions.
+- **Seeded example project** (A12, Z6) a visitor can open read-only in one click, plus **share links** (U5, §18.3).
+- **Demo replay** (Z7, `DEMO_MODE`) so the walkthrough is reliable without spending money.
+- **README case study**: the problem, the architecture diagram, the agent list, a real before/after from the Anti-Generic Engine, the eval table, and what was learned.
+- **Demo video** (2–4 minutes) of the real product.
+- Accessibility and responsive passes (V11, V12), broader tests (V1–V10).
+
+#### M4 — optional, only if they earn their place
+
+- Accounts and "save my work" (B1–B6), replacing guest-only identity.
+- File and website input (S1–S9), with SSRF and size limits.
+- PDF export (U3).
+- Image generation for visual directions (T8).
+
+#### Built so far
 
 > Added 2026-09-24: Phase 1 (Foundation) code complete. Checkpoint still open: one structured OpenAI call working **in production** needs the founder's OpenAI key, a Neon database and a Vercel project (manual steps).
 
@@ -1033,11 +1054,11 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 | A8 | [~] | Structured JSON logs with `request_id` (`services/log.ts`); no Sentry |
 | A9 | [x] | `schemas/errors.ts` (§18.5 codes, `AppError`, `toErrorResponse`) + `services/route.ts` `withErrors` |
 | A12 | [ ] | `pnpm seed:demo` is a placeholder (Phase 8) |
-| B7 (guest part) | [~] | Signed `gg_uid` cookie via `src/proxy.ts` + `getOwnerId()`; "save my work" is post-hackathon |
+| B7 (guest part) | [~] | Signed `gg_uid` cookie via `src/proxy.ts` + `getOwnerId()`; "save my work" is M4 |
 | D1, D2 | [x] | Landing hero + four stage cards; selecting one creates the project and opens the workspace |
 | F1, F2, F4–F7 | [x] | `ai/llm.ts` `generateStructured`: Zod re-validation, 1 repair retry, 2 backoff retries on 429/5xx/network, per-tier timeouts, typed errors |
 | F3 | [x] | Registry shape set by `prompts/ping.ts` and followed by `prompts/interviewer.ts`; later agents add their own files |
-| F8 | [~] | `services/context-manager.ts` slices the context per agent (Interviewer done); token budgeting is post-hackathon |
+| F8 | [~] | `services/context-manager.ts` slices the context per agent (Interviewer, Battle); token budgeting is M2 |
 | F9 | [x] | `LlmTrace` on every call (also on failure via `AiCallError.trace`); the interview route persists both outcomes with `recordRun()` |
 | G1 | [x] | `schemas/brand-context.ts` + `emptyBrandContext()`; strict-mode compatibility is unit-tested |
 | G2–G5, G9 | [x] | Append-only versions, `saveContext` with expected version → `CONFLICT`; verified against the real database |
@@ -1059,6 +1080,12 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 | E5, E6, E11 | [x] | Battle cards with lens badges, score bars, critic objections, "Why?" (§11.3) and a "How the AI worked" list from `workflow_runs` |
 | G6 | [x] | Choosing writes `selected_direction` + `positioning.*` + `personality.traits` with provenance, offers Lock, and never overwrites a locked path |
 | ADR-017 | [x] | Reasoning-effort env vars wired through `llm.ts` (see §20.2) |
+| **Portfolio mode** | | **2026-09-26** |
+| ADR-022 | [x] | `CLAUDE.md` and §0 rewritten; §22.1 is a roadmap; §23/§24 reworked; hackathon-only material removed |
+| ADR-023 | [x] | Brand Battle split into `brand_battle` + `battle_critique`, one model call each. Verified end to end: directions appear after request one, the critique after request two, and a failed critique retries alone without re-running generation |
+| ADR-024 | [x] | `OPENAI_REASONING_SUMMARY` (default off) stops paying for summaries nothing reads |
+| ADR-025 | [x] | `pnpm eval:battle` + three Stage A fixtures + committed `evals/results/summary.md` |
+| ADR-026 | [x] | Each lens names and rejects the predictable ideas first; shown under "What we ruled out". 12/12 real runs diverged 3/3 |
 
 > **Real-model check, 2026-09-25 14:20 IST (production + local).** Production runs `MODEL_PRIMARY=gpt-6-sol`, `MODEL_FAST=gpt-6-luna`.
 > - **`gpt-6-luna` has credit; `gpt-6-sol` does not** (`insufficient_quota` / `credit_balance_exhausted`). So on production every fast-tier step runs for real — the interview and the AI-written plan reasons both work — and **Brand Battle fails in 0.36 s with the friendly `AI_PROVIDER_UNAVAILABLE` message**, not a crash or a 30 s hang (ADR-015 doing its job). Fixing this is a billing change, not a code change.
@@ -1066,41 +1093,11 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 > - **Measured latency (gpt-6-luna):** interviewer 3.5–10 s · plan reasons 3.5–5.3 s · battle generate 24.2 s · battle challenge 10.9 s → **one Battle request ≈ 39 s against `maxDuration = 60`**. A slower primary model (gpt-6-sol, gpt-5.x-pro) will exceed it. Either keep the primary tier fast, raise `maxDuration` on a Vercel plan that allows it, or split generate and challenge into two requests.
 > - **Quality caveat:** on `gpt-6-luna` the critic scored the directions at distinctiveness 3–6 and genericity risk 5–7. gpt-6 models ignore `temperature` (§20.2), so the hot generator / cold critic split has no effect there. Worth comparing against `gpt-4.1` at 0.9 before the demo.
 
-Tests: 116 passing. Phase 3 added the plan validator and state machine, the planner's repair/fallback path, the SSE round trip, the Battle schemas against the shipped stub fixtures, the divergence check, score clamping, and the choose route (locked paths, stale versions, cross-guest 404).
+Tests: 126 passing. Phase 3 added the plan validator and state machine, the planner's repair/fallback path, the SSE round trip, the Battle schemas against the shipped stub fixtures, the divergence check, score clamping, and the choose route (locked paths, stale versions, cross-guest 404). Portfolio mode added the reasoning-summary control, the rejected-ideas clamp, and the two-step plan handling.
 
-#### Schedule
+## 23. Demo path & product story
 
-| Phase | Hours | Deliverable | Checkpoint |
-|---|---|---|---|
-| 1. Foundation | 2 | Next.js + shadcn + Drizzle/Neon + guest cookie + Zod schemas + `llm.ts`, deployed on Vercel | One structured OpenAI call works **in production** |
-| 2. Discover | 2.5 | Landing, stage selector, project creation, 3-panel workspace, Interviewer loop, live Brand Context panel | Idea → questions → context fills in |
-| 3. Orchestrate + Battle Lite | 2.5 | Default plans with AI reasons in sidebar, streaming client, Battle Lite with role labels and critic notes, choose / combine / regenerate | 3 directions + critique; choice saved |
-| 4. Worlds + Anti-Generic | 2.5 | 3 world cards (palette swatches, font sample, headline), lexicon, critic, one revision round, before/after UI | Visible critique with score change |
-| 5. Build + Launch | 2.5 | Brand Builder, Brand System page with locks and edits, Launch Kit | Complete kit renders |
-| 6. Guardian + export | 1.5 | Consistency Guardian with inline highlights and suggested revision; Markdown export + copy buttons | Bad post gets caught |
-| 7. Other stages | 1.5 | Brand Doctor (B/C), Audience Shifter tab, Stage D lite | All eight capabilities reachable |
-| 8. Polish | 1.5 | Loading/empty/error states, mobile check, "How the AI worked" list, seeded example project | Demo path flawless in production |
-
-**Total ≈ 16.5 focused hours.** Sleep 4–5 hours, ideally after Phase 4 or 5, with production deployed and working before you sleep.
-
-**Hard milestones (IST, Friday 25 Sept):**
-- **16:00 — feature freeze.** Bug fixes only.
-- **16:00–18:30:** README (problem, workflow diagram, agents, before/after example, setup, disclosure of AI tools used) and the 2–4 minute demo video.
-- **18:30–20:30:** your Instagram post, your LinkedIn post with the video uploaded directly (Inkloom description, inkloom.art, code INKLOOM-WCC, tags, collaboration request to @wecodecoderss), and the submission form.
-- **21:00:** check the repo is public, the live URL works in an incognito window, and the video opens. Submit. The last hour is buffer.
-
-#### If you fall behind, cut in this order
-1. Audience Shifter: show three audience reframes as static cards (no selection flow).
-2. Five Worlds: drop the visual swatches; text cards only.
-3. "How the AI worked": show steps and scores only, no before/after per step (keep the Anti-Generic before/after itself).
-4. Stage D lite: hide the card on the landing page.
-5. Brand Doctor: Stage B only.
-
-**Never cut:** the live end-to-end Stage A flow, Brand Battle Lite with visible critique, the Anti-Generic before/after, and the Consistency Guardian catching the bad post.
-
-## 23. Demo & hackathon alignment
-
-### 23.1 Demo flow
+### 23.1 The demo path
 1. Open GG Branding Studio.
 2. Select **"I have an idea"**.
 3. Enter: *"I want to build an app that helps college students find reliable teammates."*
@@ -1122,45 +1119,40 @@ Tests: 116 passing. Phase 3 added the plan validator and state machine, the plan
 19. AI detects a voice mismatch.
 20. AI suggests a revision.
 
-The handbook recommends a 2–4 minute video showing the actual product, realistic input, the AI workflow, the generated brand system, and the strongest original feature. Cut waiting time in editing; show the "How the AI worked" drawer and the eval table briefly.
+> This is the path that must always work (`CLAUDE.md`). Hand-test it before any push that touches it, and keep the seeded example project (A12) on the same scenario so a visitor sees the finished version first.
 
-### 23.2 Demo story
+### 23.2 The product story
 *"Instead of asking an AI to generate a brand in one prompt, GG Branding Studio understands where a founder is, decides what the brand needs, uses specialized AI capabilities, challenges its own output, lets the founder make decisions, and then turns those decisions into a living Brand System."*
 
-### 23.3 Judging alignment
-| Criterion | Weight | Show |
-|---|---|---|
-| Prompt engineering / AI workflow | 25% | Specialized agents, prompt chains, structured outputs, context passing, evaluation, critique |
-| Originality | 20% | Adaptive workflow, eight capabilities, AI-selected workflow, Anti-Generic layer, continuous Consistency Guardian |
-| Working implementation | 20% | Real input → real AI processing → real workflow → real output |
-| Problem solving / usefulness | 15% | How the system improves actual branding decisions |
-| UI / UX | 10% | A clear branding workspace |
-| Demo | 10% | The actual working product |
-
-### 23.4 Inkloom
-Inkloom integration is not required and not a judging criterion. Not a core dependency. Visual generation can be considered independently.
+### 23.3 What a visitor should notice
+| In the first minute | Why it matters |
+|---|---|
+| It asks about *their* problem before saying anything about branding | Not a one-prompt generator |
+| The workflow sidebar says what is coming and why, in their words | The AI plans, and explains itself (§7.3, §11.3) |
+| Three directions argue with each other, and a critic scores and objects | The system challenges its own output (§13.5, §14.3) |
+| Nothing is decided until they choose, and a choice can be locked | AI recommends, the user decides (§11.1, §11.2) |
+| "How the AI worked" shows real models, latencies and scores | The workflow is inspectable, not a claim (E11) |
 
 ---
 
-## 24. Hackathon submission checklist
+## 24. Cost, access & public-URL protection
 
-> Added from the participant handbook (the product-side items; social posts are per-member and outside the codebase).
-- [ ] Submitted before **25 Sept 2026, 22:00 IST** (target 21:00)
-- [ ] Built within the official build window; any pre-existing work disclosed in the README
-- [ ] Public or judge-accessible GitHub repository
-- [ ] Live deployed product link, usable without friction (guest mode)
-- [ ] Demo video (2–4 min): problem → product → realistic input → AI workflow → output → strongest original feature
-- [ ] README explains prompt architecture, agents, chains and evaluation methods
-- [ ] Each team member's role and specific contribution documented (needed for individual submissions)
-- [ ] Every member: own Instagram post, own LinkedIn post with the demo video uploaded directly, individual submission form
-- [ ] Third-party licenses and API terms respected
+> Added 2026-09-26 (ADR-022), replacing the hackathon submission checklist. The live URL is public and every AI call costs money, so this is a product requirement.
+
+- **One-click access:** guest identity (ADR-005), no sign-up, a seeded example project openable read-only (A12, Z6).
+- **Rate limiting** per guest and per IP on every AI route (W6), with the §18.5 `RATE_LIMITED` message.
+- **Per-project AI call caps** (`DAILY_AI_CALLS_PER_PROJECT`, W11): when a project hits its cap it keeps working read-only and says so plainly.
+- **Cheap tier by default:** `MODEL_FAST` for interviewer turns, critics and consistency checks; `MODEL_PRIMARY` only for generation and synthesis (§20.2).
+- **No unbounded retries:** one repair retry, two provider retries, no retry after a timeout or an exhausted quota (ADR-012, ADR-015).
+- **Demo replay** (`DEMO_MODE`, Z7) for the recorded walkthrough, so showing the product costs nothing.
+- **Secrets stay server-side**, every query is owner-scoped, and user content is always data in prompts, never instructions (§19, W7, W8).
 
 ---
 
 ## 25. Definition of complete & acceptance criteria
 
 ### 25.1 Complete product
-> Hackathon mode: "create an account" is replaced by guest identity, and "save and return later" works in the same browser via the guest cookie or a share link.
+> Today: "create an account" is replaced by guest identity, and "save and return later" works in the same browser via the guest cookie or a share link (M3).
 
 A user can: create an account · create a project · select their stage · explain their situation · have AI understand it · receive an adaptive workflow · interact with Brand Interviewer · analyze an existing product/brand when relevant · explore strategic directions · explore identity worlds · shift positioning across audiences · detect generic branding · critique AI outputs · make and lock decisions · build and review a Brand System · generate a Launch Kit · save and return later · submit future content · run Consistency Guardian · receive revision suggestions · view workflow history · export/share brand materials.
 
@@ -1207,7 +1199,6 @@ A user can: create an account · create a project · select their stage · expla
 - Checking domain or trademark availability (we only warn).
 - Team collaboration / multi-user editing of one project.
 - Payments, billing, or subscription plans.
-- Inkloom integration.
 - Native mobile apps (responsive web only).
 
 ---
@@ -1239,24 +1230,30 @@ Record architectural decisions here (see `CLAUDE.md`). Format: **ID · Date · D
 | ADR-019 | 2026-09-25 | The §7.3 rule "a consistency check comes before finalization" is implemented as: if the plan contains `brand_builder`, an `anti_generic` or `consistency_guardian` step must come before it | "Finalization" is the Brand Builder: it is the step that turns choices into the Brand System. All four default plans satisfy this, so the static fallback always validates | Accepted |
 | ADR-020 | 2026-09-25 | A module's current output (the Battle's directions and critique) is stored in `workflow_runs` under the reserved agent name `module_state`, not in a new table or the Brand Context | The Brand Context holds decisions the user has made; unchosen directions are not decisions. A new table would be a migration mid-hackathon for data that is already project-scoped and time-ordered. **Revisit** in Phase 5 if other modules need richer queries | Accepted |
 | ADR-021 | 2026-09-25 | Local OpenAI stub with per-agent fixtures (`scripts/stub/`), opt-in through `pnpm dev:stub` only | The OpenAI account has no credits until after the build, so the workflow, streaming and UI had to be verifiable some other way. It imitates tier latency (1–3 s fast, 5–15 s primary) and answers invalid once for `battle_challenge` so the repair retry is exercised. Nothing else sets `OPENAI_BASE_URL`, so `pnpm dev`, `pnpm build` and production can never reach it | Accepted |
+| ADR-022 | 2026-09-26 | **Portfolio mode.** The hackathon was withdrawn from: no deadline, no time boxes. §0 and `CLAUDE.md` rewritten, §22.1 replaced by the M1–M4 roadmap, §23 reduced to the demo path and product story, §24 replaced by cost/access protection. **Alternative:** archive the project. **Impact:** ADR-008's "lite" scope becomes a floor to build on, not the target; quality and measurable AI behaviour outrank speed; the public URL's running cost becomes a product requirement | The project is now something to show and keep using rather than submit, and the old plan was full of dates and judging criteria that no longer apply | Accepted |
+| ADR-023 | 2026-09-26 | **Brand Battle is two workflow steps**, `brand_battle` (generate) and `battle_critique` (challenge), each its own `/workflow/next` request. Directions are persisted before the critique runs; a failed step stays `failed` in the plan so a retry re-runs only it. **Alternative:** keep one request with both calls. **Impact:** `MODULE_NAMES` gains `battle_critique`; the §7.5 default plans gain a step; the decision now belongs to the critique step | One request holding both calls measured ~39 s against `maxDuration = 60`, which a slower primary model would exceed, and a failed critique threw away directions that had already been paid for. Verified: the retry re-runs the critique only | Accepted |
+| ADR-024 | 2026-09-26 | Reasoning summaries are **off by default**, controlled by `OPENAI_REASONING_SUMMARY` (`off`/`auto`/`detailed`). "Off" sends `reasoningSummary: null` | The provider asks for a `detailed` summary whenever a reasoning effort is set (§20.2). Nothing in the product reads it, so it was pure output-token cost on every call | Accepted |
+| ADR-025 | 2026-09-26 | **Eval harness starts with a Brand Battle model comparison**: `pnpm eval:battle` over `evals/fixtures/battle/`, with `--judge` so one critic model scores every configuration. Raw results stay local; `evals/results/summary.md` is committed | Model choice was being made on impression. The comparison is also the portfolio evidence that this system beats one-prompt generation (§0). A model grading its own output is not a comparison, hence the fixed judge | Accepted |
+| ADR-026 | 2026-09-26 | **Divergence comes from the prompt, not the temperature.** Each lens first names 2–3 predictable directions and why they are predictable, stores them in `obvious_ideas_rejected`, then writes something that avoids them. The UI shows them under "What we ruled out"; the code divergence check stays as the safety net | gpt-6 models ignore `temperature` (§20.2), so the hot-generator setting no longer buys variety. Measured over 12 real runs: every run diverged 3/3 on both category and audience, and every lens rejected 3 obvious ideas | Accepted |
 
 
 ## 28. Open questions
 
 Update the relevant sections and the Decision Log once answered.
 
-**Answered 2026-09-24**
-- [x] Timeline: 36-hour hackathon; submit by 25 Sept 2026, 22:00 IST (§0, §22.1).
+**Answered**
 - [x] Stack: Next.js full-stack TypeScript (§20.1, ADR-006).
 - [x] LLM provider: OpenAI (§20.2).
-- [x] Authentication for the demo: guest cookie (ADR-005).
-- [x] Team: solo; scope per ADR-008.
+- [x] Identity: guest cookie, no sign-up (ADR-005).
+- [x] Scope: v1 ships the ADR-008 "lite" versions; the roadmap (§22.1) grows them.
+- [x] **Which models are reachable:** the key reaches the gpt-4.1, gpt-4o, gpt-5.x and gpt-6 families. `gpt-6-luna` has credit; `gpt-6-sol` does not (§22.1 real-model check).
+- [x] **Vercel env vars:** set — production has both model ids plus the database and session secret; `/api/health` is green.
+- [x] **Timeline:** none. Portfolio project (§0, ADR-022).
 
 **Still open**
-- [x] **Which models:** the key can reach the gpt-4.1, gpt-4o and gpt-5.x families. Set for now: `MODEL_PRIMARY=gpt-4.1`, `MODEL_FAST=gpt-4.1-mini` (both honour `temperature`, so `OPENAI_OMIT_TEMPERATURE=0`). Switching `MODEL_PRIMARY` to `gpt-5.4` needs `OPENAI_OMIT_TEMPERATURE=1`, which also drops the critics' low temperature.
-- [~] **OpenAI credits (2026-09-25, updated 14:20):** the account is out of credit for paid models, **but `gpt-6-luna` runs**, so the fast tier works for real in production. `gpt-6-sol` (the current `MODEL_PRIMARY`) returns `credit_balance_exhausted`, so Brand Battle and every later primary-tier module fail with the friendly error until credits are added. Decide before the demo: add credits, or point `MODEL_PRIMARY` at a model the account can actually reach.
-- [x] **Vercel env vars:** set — production has both model ids (`gpt-6-sol` / `gpt-6-luna`) plus the database and session secret; `/api/health` is green.
-- [ ] **Hosting accounts:** OK to use Vercel + Neon (free tiers)?
-- [ ] **Visual generation (T8):** default is *cut* for the hackathon. Confirm.
+- [ ] **🚨 Primary-tier credit:** production's `MODEL_PRIMARY=gpt-6-sol` returns `credit_balance_exhausted`, so Brand Battle's generate step and every later primary-tier module fail with the friendly error. Either add credit or point `MODEL_PRIMARY` at a model the account can reach. `pnpm eval:battle` (§21.1) is the tool for choosing that model on evidence.
+- [ ] **Model choice per tier:** decide from the eval results, not preference. Note that gpt-6 models ignore `temperature` (§20.2), so the hot-generator / cold-critic split only exists on the gpt-4.x/5.x families.
+- [ ] **Cost ceiling for the public URL:** what monthly spend is acceptable? That number sets `RATE_LIMIT_PER_MIN` and `DAILY_AI_CALLS_PER_PROJECT` (§24).
+- [ ] **Visual generation (T8):** still deferred to M4. Confirm it is wanted at all.
 - [ ] **Final product name and tagline:** keep "GG Branding Studio" / "Build a brand that can think."?
-- [ ] **Pre-existing code:** anything already built before the hackathon window that must be disclosed?
+- [ ] **Public repository:** is the repo public as part of the portfolio, and should the README carry the case study (M3)?

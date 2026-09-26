@@ -6,15 +6,17 @@ GG Branding Studio is an adaptive AI branding workspace. A user says where they 
 
 ---
 
-## ⏱ Hackathon mode
+## 🎯 Portfolio mode
 
-- **36-hour hackathon, solo builder. Deadline: Friday 25 Sept 2026, 22:00 IST. Feature freeze: 16:00 IST.**
-- **Solo scope (ADR-008):** every capability ships as its thinnest real version, mostly one AI call each. Brand Battle Lite = 2 calls (generate 3 role-labelled directions → one critic call). Five Worlds = 3 worlds. Anti-Generic = 1 revision round. Orchestrator = default plans + AI-written reasons + code validator.
-- Build only what plan §22.1 marks **MUST**, then **SHOULD**. Anything marked *post-hackathon* is out of scope unless the founder says otherwise.
-- Priority: working live demo path > visible AI workflow (critique, scores, "How the AI worked") > all eight capabilities present > polish.
-- If a task runs 50% over its time box, ship the simpler version and log it in plan §27.
-- Deploy continuously from Phase 1. Never leave `main` or production broken.
-- Keep task specs short in hackathon mode: Objective, Approach, Acceptance Criteria, Testing, Status. The full template (plan §1.1) is for post-hackathon work.
+> Changed 2026-09-26 (ADR-022): the hackathon was withdrawn from. This is now a portfolio project with **no deadline**. Work carefully: quality, clarity and measurable AI behaviour matter more than speed.
+
+- **No time boxes.** Take the time a task needs. A half-built capability is worse than a slower, finished one.
+- **ADR-008's "lite" scope is a floor, not a ceiling.** It got v1 working; the roadmap (plan §22.1) expands each capability to full strength. Don't treat "lite" as the target.
+- **The demo path always works.** `main` and production are never broken. Anything on the plan §23.1 path is regression-tested by hand before a push that touches it.
+- **A recruiter must be able to use the live app in one click.** No sign-up: guest identity (ADR-005), a seeded example project to open read-only, and sensible empty states everywhere.
+- **Cost protection is mandatory.** The URL is public and every AI call costs real money: rate limits, per-project call caps, cheap models where quality allows, and no unbounded retries (W6, W11).
+- **Measurable AI behaviour beats claims.** Anything asserted about output quality should come from the eval harness (§21) with published results, not from a screenshot.
+- Each task still ends with a short summary: what changed, how it was tested, what's next, plan updates.
 
 ---
 
@@ -29,7 +31,7 @@ GG Branding Studio is an adaptive AI branding workspace. A user says where they 
 7. **AI challenges itself.** The Anti-Generic Engine and evaluation are core features, not polish.
 8. **Usable outcome.** The user leaves with a real Brand System and Launch Kit.
 
-Don't remove a major capability because it's complex. Use the thinner version in plan §22.1 instead.
+Don't remove a major capability because it's complex. Ship the smaller version from the roadmap (plan §22.1) and then grow it.
 
 ---
 
@@ -58,14 +60,16 @@ READ PLAN → UNDERSTAND TASK → CHECK EXISTING CODE → CHECK DEPENDENCIES
 Next.js (App Router) + TypeScript strict · Tailwind + shadcn/ui · Vercel AI SDK (`ai`, `@ai-sdk/openai`) · OpenAI · Zod · Drizzle + Postgres (Neon) · Zustand · Vitest · Vercel · pnpm. Details and OpenAI notes: plan §20.
 
 ```bash
-pnpm dev          # local dev
+pnpm dev          # local dev (talks to the real OpenAI API)
+pnpm dev:stub     # local dev against the fixture stub; the ONLY thing that sets OPENAI_BASE_URL
+pnpm stub         # the stub on its own (scripts/stub, ADR-021)
 pnpm build        # must pass before pushing to main
 pnpm lint         # eslint
 pnpm typecheck    # tsc --noEmit
 pnpm test         # vitest
+pnpm eval:battle  # model comparison for Brand Battle -> evals/results/
 pnpm db:push      # apply Drizzle schema
 pnpm seed:demo    # seeded example project
-# post-hackathon: pnpm eval, pnpm record:demo
 ```
 
 ## Repo map
@@ -117,15 +121,14 @@ plan.md           product plan, specs, task tree, decision log
 The plan §23.1 scenario (idea → interview → Brand Battle → Five Worlds → Anti-Generic → Brand Builder → Launch Kit → Consistency Guardian catches a voice mismatch) must always work on `main` and in production. Before pushing to `main`:
 
 1. `pnpm lint && pnpm typecheck && pnpm test && pnpm build`
-2. Run the demo idea end to end by hand.
-3. Check the production URL after each deploy (demo-mode replay is deferred in solo mode).
+2. Run the demo idea end to end by hand — against the stub for structure, and against a real model for anything that changes a prompt or a schema.
+3. Check the production URL after each deploy.
 
 ## Don't
 
-- Don't make Inkloom a dependency; it isn't required or judged.
 - Don't use real brands' names, logos or characters as fixtures or example outputs.
 - Don't let visual generation come before strategy (strategy → personality → visual brief → visuals).
-- Don't start post-hackathon tasks before the MUST list is done.
+- Don't start a later roadmap milestone while the current one has a broken or half-finished capability.
 - Don't commit secrets, `.env`, or raw eval outputs (only `evals/results/summary.md`).
 
 ## When unsure
