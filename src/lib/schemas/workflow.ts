@@ -47,6 +47,7 @@ export const MODULE_NAMES = [
   "interviewer",
   "brand_doctor",
   "brand_battle",
+  "battle_critique",
   "audience_shifter",
   "five_worlds",
   "anti_generic",

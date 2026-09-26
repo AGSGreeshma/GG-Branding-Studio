@@ -9,6 +9,7 @@ import { ErrorState } from "@/components/error-state";
 import { LoadingStatus } from "@/components/loading-status";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { moduleSpec } from "@/lib/agents/registry";
 import type { RunSummary } from "@/lib/db/queries";
 import { MODULE_LABELS } from "@/lib/services/workflow-engine";
 import { BrandStoreProvider, useBrandStore, type WorkspaceSnapshot } from "@/state/brand-store";
@@ -38,6 +39,9 @@ export function Workspace({
     </BrandStoreProvider>
   );
 }
+
+/** Safety net: how many steps the workspace may run without the user asking. */
+const MAX_AUTO_RUNS = 8;
 
 /** What the agents are doing right now, from the event stream (plan §18.4). */
 function ActivityLog() {
@@ -76,7 +80,7 @@ function WorkspaceShell({ runs }: { runs: RunSummary[] }) {
   const interviewComplete = useBrandStore((state) => state.complete);
   const planFallbackReason = useBrandStore((state) => state.planFallbackReason);
   const workflow = useWorkflowStream();
-  const autoStarted = useRef<true | null>(null);
+  const autoRuns = useRef(0);
 
   const interviewStep = plan.steps.find((step) => step.module === "interviewer");
   const interviewDone = !interviewStep || interviewStep.status === "complete" || interviewComplete;
@@ -84,14 +88,29 @@ function WorkspaceShell({ runs }: { runs: RunSummary[] }) {
   const awaitingDecision = plan.steps.some((step) => step.status === "awaiting_decision");
   const showsBattle = (battle?.directions.length ?? 0) > 0;
 
-  // Discovery flows straight into the next module: the user should not have to
-  // ask for the workflow they were already promised.
+  // The next step to run on our own: never a failed one (that is the user's
+  // Try Again) and never one that isn't built yet.
+  const pendingStep =
+    plan.steps.find((step) => step.status === "running") ??
+    plan.steps.find((step) => step.status === "pending");
+  const autoRunnable =
+    pendingStep && moduleSpec(pendingStep.module).implemented ? pendingStep.module : null;
+
+  const { status: workflowStatus, run: runWorkflow } = workflow;
+
+  /*
+   * The workflow continues by itself: discovery flows into the Battle, and the
+   * Battle's generate step flows into its critique (ADR-023). It stops when a
+   * step needs a decision, fails, or isn't built yet. The counter is a
+   * circuit-breaker: a module that never advances the plan cannot loop forever.
+   */
   useEffect(() => {
-    if (autoStarted.current != null || !interviewDone || showsBattle) return;
-    if (workflow.status !== "idle") return;
-    autoStarted.current = true;
-    void workflow.run();
-  }, [interviewDone, showsBattle, workflow]);
+    if (!interviewDone || awaitingDecision || !autoRunnable) return;
+    if (workflowStatus !== "idle") return;
+    if (autoRuns.current >= MAX_AUTO_RUNS) return;
+    autoRuns.current += 1;
+    void runWorkflow();
+  }, [interviewDone, awaitingDecision, autoRunnable, workflowStatus, runWorkflow]);
 
   // Refresh the server-rendered run list once a module finishes (E11).
   const refreshed = useRef(false);
@@ -168,17 +187,23 @@ function WorkspaceShell({ runs }: { runs: RunSummary[] }) {
 
           {showsBattle ? <BattleView /> : null}
 
-          {interviewDone && !showsBattle && workflow.status === "idle" ? (
+          {interviewDone && !showsBattle && workflow.status === "idle" && !autoRunnable ? (
             <div className="flex flex-col items-start gap-3">
               <EmptyState
-                title="Ready for the next step"
-                description="Your Brand Context is filled in. The next capability in your workflow runs when you are."
+                title={pendingStep ? "That step isn't built yet" : "Workflow complete"}
+                description={
+                  pendingStep
+                    ? `"${MODULE_LABELS[pendingStep.module]}" is on the roadmap. Everything you have decided so far is saved.`
+                    : "Every step in your workflow has run. Your Brand Context holds the decisions you made."
+                }
                 className="w-full py-10"
               />
-              <Button type="button" onClick={() => void workflow.run()}>
-                Run the next step
-                <ArrowRightIcon className="size-4" aria-hidden />
-              </Button>
+              {pendingStep ? (
+                <Button type="button" variant="outline" onClick={() => void workflow.run()}>
+                  Try it anyway
+                  <ArrowRightIcon className="size-4" aria-hidden />
+                </Button>
+              ) : null}
             </div>
           ) : null}
 

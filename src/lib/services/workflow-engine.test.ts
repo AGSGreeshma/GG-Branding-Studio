@@ -7,6 +7,7 @@ import {
   defaultPlanFor,
   hasContextValue,
   nextRunnableStep,
+  setStepStatus,
   skipLockedSteps,
   validatePlan,
 } from "./workflow-engine";
@@ -43,11 +44,12 @@ function planOf(
 }
 
 describe("default plans", () => {
-  it("sends the interview straight into the Brand Battle for an idea (ADR-018)", () => {
+  it("sends the interview straight into the Brand Battle for an idea (ADR-018, ADR-023)", () => {
     const plan = defaultPlanFor("idea");
     expect(plan.steps.map((step) => step.module)).toEqual([
       "interviewer",
       "brand_battle",
+      "battle_critique",
       "five_worlds",
       "anti_generic",
       "brand_builder",
@@ -73,20 +75,35 @@ describe("validatePlan", () => {
   const context = discoveredContext();
 
   it("accepts a plan whose requirements are met in order", () => {
-    const plan = planOf([["brand_battle"], ["anti_generic"], ["brand_builder"], ["launch_kit"]]);
+    const plan = planOf([
+      ["brand_battle"],
+      ["battle_critique"],
+      ["anti_generic"],
+      ["brand_builder"],
+      ["launch_kit"],
+    ]);
     expect(validatePlan({ plan, context, lockedPaths: [] })).toEqual({ valid: true, errors: [] });
   });
 
   it("rejects a step that writes a locked path", () => {
-    const plan = planOf([["brand_battle"]]);
+    // Since ADR-023 the positioning is written by the decision at the end of
+    // the critique step, so that is the step a positioning lock blocks.
+    const plan = planOf([["brand_battle"], ["battle_critique"]]);
     const result = validatePlan({ plan, context, lockedPaths: ["positioning.statement"] });
     expect(result.valid).toBe(false);
     expect(result.errors.join(" ")).toContain("positioning.statement");
   });
 
+  it("lets the generation step run even when the positioning is locked", () => {
+    // Generating proposals writes nothing, so it is never blocked by a lock.
+    const plan = planOf([["brand_battle"]]);
+    expect(validatePlan({ plan, context, lockedPaths: ["positioning"] }).valid).toBe(true);
+  });
+
   it("rejects the Launch Kit before the Brand Builder", () => {
     const plan = planOf([
       ["brand_battle"],
+      ["battle_critique"],
       ["anti_generic"],
       ["launch_kit"],
       ["brand_builder"],
@@ -97,7 +114,7 @@ describe("validatePlan", () => {
   });
 
   it("rejects finalising the brand with nothing checking the work first", () => {
-    const plan = planOf([["brand_battle"], ["brand_builder"], ["launch_kit"]]);
+    const plan = planOf([["brand_battle"], ["battle_critique"], ["brand_builder"], ["launch_kit"]]);
     const result = validatePlan({ plan, context, lockedPaths: [] });
     expect(result.valid).toBe(false);
     expect(result.errors.join(" ")).toContain("Anti-Generic");
@@ -162,12 +179,37 @@ describe("plan progress", () => {
     expect(plan.steps[1]?.status).toBe("running");
     expect(nextRunnableStep(plan)?.module).toBe("brand_battle");
   });
+
+  it("flows from the Battle's generation step into its critique (ADR-023)", () => {
+    let plan = completeStep(defaultPlanFor("idea"), "interviewer");
+    plan = completeStep(plan, "brand_battle");
+    expect(nextRunnableStep(plan)?.module).toBe("battle_critique");
+  });
+
+  it("re-runs a failed step before moving on, so Try Again repeats only that call", () => {
+    let plan = completeStep(defaultPlanFor("idea"), "interviewer");
+    plan = completeStep(plan, "brand_battle");
+    plan = setStepStatus(plan, "battle_critique", "failed");
+
+    expect(nextRunnableStep(plan)?.module).toBe("battle_critique");
+  });
+
+  it("skips past a step awaiting a decision rather than running it again", () => {
+    let plan = completeStep(defaultPlanFor("idea"), "interviewer");
+    plan = completeStep(plan, "brand_battle");
+    plan = setStepStatus(plan, "battle_critique", "awaiting_decision");
+
+    expect(nextRunnableStep(plan)?.module).toBe("five_worlds");
+  });
 });
 
 describe("workflow state machine", () => {
   it("allows the phases the workflow actually walks through", () => {
     expect(canTransition("DISCOVERY", "WORKFLOW_PLANNING")).toBe(true);
     expect(canTransition("WORKFLOW_PLANNING", "POSITIONING")).toBe(true);
+    // The Battle's two steps: generation, then the critique (ADR-023).
+    expect(canTransition("POSITIONING", "CRITIQUE")).toBe(true);
+    expect(canTransition("CRITIQUE", "USER_DECISION")).toBe(true);
     expect(canTransition("POSITIONING", "USER_DECISION")).toBe(true);
     expect(canTransition("USER_DECISION", "WORKFLOW_PLANNING")).toBe(true);
     expect(canTransition("POSITIONING", "POSITIONING")).toBe(true);

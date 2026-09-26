@@ -18,9 +18,12 @@ import { logEvent } from "../log";
 import type { Emit } from "../stream";
 
 /*
- * Brand Battle Lite runner (plan §14.3, K6–K8 in their two-call form).
- * The agents stay pure; this service persists the runs and narrates progress
- * so the workspace can show which role is working (plan §18.4).
+ * Brand Battle runners (plan §14.3, K6–K8).
+ *
+ * Two workflow steps, one model call each (ADR-023): generation is slow and
+ * expensive, the critique is cheap, and separating them means a failed critique
+ * never costs the directions again, and neither request comes near maxDuration.
+ * The agents stay pure; these services persist runs and narrate progress.
  */
 
 export function sliceForBattle(context: BrandContext): BattleSlice {
@@ -43,6 +46,19 @@ function directionLabel(direction: BattleDirection): string {
   return `Direction ${direction.id.toUpperCase()}`;
 }
 
+async function recordFailure(projectId: string, err: unknown, parentRunId?: string | null) {
+  const trace = (err as { trace?: unknown }).trace;
+  if (!trace) return;
+  await recordRun({
+    projectId,
+    trace: trace as Parameters<typeof recordRun>[0]["trace"],
+    module: "brand_battle",
+    stage: "POSITIONING",
+    parentRunId: parentRunId ?? null,
+    status: "failed",
+  }).catch(() => undefined);
+}
+
 export interface RunBattleInput {
   projectId: string;
   context: BrandContext;
@@ -53,9 +69,9 @@ export interface RunBattleInput {
 }
 
 /**
- * Two model calls: generate three directions, then challenge them.
- * Both are recorded in `workflow_runs`, the critique as a child of the
- * generation run, with the scores in `evaluation_json` (E11).
+ * Step one: three competing directions, one per lens.
+ * Returns a result with no critique yet — the workspace shows the directions
+ * straight away while the critic step runs.
  */
 export async function runBattleModule(input: RunBattleInput): Promise<BattleResult> {
   const { projectId, context, emit } = input;
@@ -79,6 +95,8 @@ export async function runBattleModule(input: RunBattleInput): Promise<BattleResu
   let divergenceNote: string | null = null;
 
   // Divergence check in code: three versions of one idea is not a battle (§14.3).
+  // The prompt asks each lens to reject the obvious ideas first (ADR-026); this
+  // is the safety net for when it does it anyway.
   const divergence = checkDivergence(directions);
   if (!divergence.ok) {
     logEvent("warn", "battle.collision", { project_id: projectId, note: divergence.message ?? "" });
@@ -107,7 +125,7 @@ export async function runBattleModule(input: RunBattleInput): Promise<BattleResu
     }
   }
 
-  const parentRunId = await recordRun({
+  const runId = await recordRun({
     projectId,
     trace: generated.trace,
     module: "brand_battle",
@@ -118,14 +136,36 @@ export async function runBattleModule(input: RunBattleInput): Promise<BattleResu
   for (const direction of directions) {
     emit({
       type: "agent.completed",
-      run_id: parentRunId,
+      run_id: runId,
       parent_run_id: null,
       agent: LENS_LABELS[direction.lens],
       summary: `${directionLabel(direction)}: ${direction.name}`,
     });
   }
 
-  for (const direction of directions) {
+  return { directions, critique: null, divergence_note: divergenceNote, run_id: runId };
+}
+
+export interface RunCritiqueInput {
+  projectId: string;
+  context: BrandContext;
+  /** The stored directions to challenge. */
+  battle: BattleResult;
+  emit: Emit;
+  requestId: string;
+}
+
+/**
+ * Step two: the Skeptic and the Differentiation Expert challenge the stored
+ * directions. A failure here throws, so the workflow step is marked failed and
+ * "Try again" re-runs only this call — the directions are already saved.
+ */
+export async function runBattleCritiqueModule(input: RunCritiqueInput): Promise<BattleResult> {
+  const { projectId, context, battle, emit } = input;
+  const slice = sliceForBattle(context);
+  const parentRunId = battle.run_id;
+
+  for (const direction of battle.directions) {
     emit({
       type: "module.progress",
       run_id: parentRunId,
@@ -133,77 +173,58 @@ export async function runBattleModule(input: RunBattleInput): Promise<BattleResu
     });
   }
 
-  let critique: BattleResult["critique"] = null;
+  let challenged;
   try {
-    const challenged = await runBattleChallenge(slice, directions);
-    critique = challenged.critique;
-
-    await recordRun({
-      projectId,
-      trace: challenged.trace,
-      module: "brand_battle",
-      stage: "CRITIQUE",
-      parentRunId,
-      outputContext: challenged.critique,
-      evaluation: Object.fromEntries(
-        challenged.critique.critiques.map((entry) => [entry.direction_id, entry.scores]),
-      ),
-    }).catch(() => undefined);
-
-    for (const entry of challenged.critique.critiques) {
-      const severity = severityFor(entry);
-      for (const objection of entry.objections) {
-        emit({
-          type: "critique.finding",
-          run_id: parentRunId,
-          target_path: `battle.${entry.direction_id}`,
-          kind: "objection",
-          severity,
-          detail: objection.claim,
-        });
-      }
-      for (const cliche of entry.cliches) {
-        emit({
-          type: "critique.finding",
-          run_id: parentRunId,
-          target_path: `battle.${entry.direction_id}`,
-          kind: "cliche",
-          severity: "medium",
-          detail: cliche,
-        });
-      }
-    }
-
-    emit({
-      type: "agent.completed",
-      run_id: parentRunId,
-      parent_run_id: parentRunId,
-      agent: "Skeptic & Differentiation Expert",
-      summary: `Recommends ${challenged.critique.recommendation.direction_id.toUpperCase()}`,
-    });
+    challenged = await runBattleChallenge(slice, battle.directions);
   } catch (err) {
-    // The directions are worth showing even when the critic call fails.
     await recordFailure(projectId, err, parentRunId);
     logEvent("warn", "battle.critique_failed", { project_id: projectId });
-    emit({
-      type: "module.progress",
-      run_id: parentRunId,
-      message: "The critique didn't come back this time — showing the directions without it.",
-    });
+    throw err;
   }
 
-  return { directions, critique, divergence_note: divergenceNote, run_id: parentRunId };
-}
-
-async function recordFailure(projectId: string, err: unknown, parentRunId?: string) {
-  const trace = (err as { trace?: unknown }).trace;
-  if (!trace) return;
   await recordRun({
     projectId,
-    trace: trace as Parameters<typeof recordRun>[0]["trace"],
-    module: "brand_battle",
-    stage: "POSITIONING",
-    parentRunId: parentRunId ?? null,
-    status: "failed",
+    trace: challenged.trace,
+    module: "battle_critique",
+    stage: "CRITIQUE",
+    parentRunId,
+    outputContext: challenged.critique,
+    evaluation: Object.fromEntries(
+      challenged.critique.critiques.map((entry) => [entry.direction_id, entry.scores]),
+    ),
   }).catch(() => undefined);
+
+  for (const entry of challenged.critique.critiques) {
+    const severity = severityFor(entry);
+    for (const objection of entry.objections) {
+      emit({
+        type: "critique.finding",
+        run_id: parentRunId,
+        target_path: `battle.${entry.direction_id}`,
+        kind: "objection",
+        severity,
+        detail: objection.claim,
+      });
+    }
+    for (const cliche of entry.cliches) {
+      emit({
+        type: "critique.finding",
+        run_id: parentRunId,
+        target_path: `battle.${entry.direction_id}`,
+        kind: "cliche",
+        severity: "medium",
+        detail: cliche,
+      });
+    }
+  }
+
+  emit({
+    type: "agent.completed",
+    run_id: parentRunId,
+    parent_run_id: parentRunId,
+    agent: "Skeptic & Differentiation Expert",
+    summary: `Recommends ${challenged.critique.recommendation.direction_id.toUpperCase()}`,
+  });
+
+  return { ...battle, critique: challenged.critique };
 }

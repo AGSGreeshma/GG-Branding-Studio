@@ -27,6 +27,7 @@ const DEFAULT_PLANS: Record<EntryStage, ReadonlyArray<{ module: ModuleName; reas
   idea: [
     { module: "interviewer", reason: "We know almost nothing yet, so we start with your problem and who has it." },
     { module: "brand_battle", reason: "Several positionings are usually defensible, so we make them compete instead of guessing." },
+    { module: "battle_critique", reason: "A separate critic attacks all three directions before you pick one." },
     { module: "five_worlds", reason: "One strategy can become very different brands; you should see the range before choosing." },
     { module: "anti_generic", reason: "First drafts drift towards safe, generic language. This step attacks that." },
     { module: "brand_builder", reason: "Your decisions become one consistent Brand System." },
@@ -36,6 +37,7 @@ const DEFAULT_PLANS: Record<EntryStage, ReadonlyArray<{ module: ModuleName; reas
     { module: "interviewer", reason: "We need what your product really does before we talk about branding." },
     { module: "brand_doctor", reason: "Your current messaging is diagnosed for gaps and contradictions." },
     { module: "brand_battle", reason: "Competing positionings show which claim is strongest for your audience." },
+    { module: "battle_critique", reason: "A separate critic attacks all three directions before you pick one." },
     { module: "anti_generic", reason: "Product copy is where clichés hide; we challenge them." },
     { module: "brand_builder", reason: "Your decisions become one consistent Brand System." },
     { module: "launch_kit", reason: "You leave with copy you can actually publish." },
@@ -43,6 +45,7 @@ const DEFAULT_PLANS: Record<EntryStage, ReadonlyArray<{ module: ModuleName; reas
   brand: [
     { module: "brand_doctor", reason: "We start by diagnosing what your brand says today and where it contradicts itself." },
     { module: "brand_battle", reason: "Alternative strategic directions show what a stronger version could look like." },
+    { module: "battle_critique", reason: "A separate critic attacks all three directions before you pick one." },
     { module: "five_worlds", reason: "Identity options make the change concrete instead of abstract." },
     { module: "anti_generic", reason: "We check the new language is sharper than what you had." },
     { module: "brand_builder", reason: "The chosen direction becomes a documented Brand System." },
@@ -68,10 +71,15 @@ export function currentStep(plan: WorkflowPlan): PlanStep | null {
   return plan.steps.find((step) => step.status === "running") ?? null;
 }
 
-/** The next step to execute: the running one, else the first pending one. */
+/**
+ * The next step to execute: the one already running, else one that failed and
+ * can be retried, else the first pending one. A failed step stays in place so
+ * "Try again" re-runs only it (ADR-023).
+ */
 export function nextRunnableStep(plan: WorkflowPlan): PlanStep | null {
   return (
     plan.steps.find((step) => step.status === "running") ??
+    plan.steps.find((step) => step.status === "failed") ??
     plan.steps.find((step) => step.status === "pending") ??
     null
   );

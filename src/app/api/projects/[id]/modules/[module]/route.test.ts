@@ -31,10 +31,27 @@ const store = vi.hoisted(() => ({ current: null as unknown as Store }));
 
 vi.mock("@/lib/session", () => ({ getOwnerId: async () => store.current.callerOwnerId }));
 
+const fakeTrace = {
+  agent: "battle_generate",
+  model: "test-primary-model",
+  promptVersion: "1.0.0",
+  tokensIn: 700,
+  tokensOut: 1600,
+  latencyMs: 24000,
+  retryCount: 0,
+  errorCode: null,
+};
+
+// The agents themselves are covered by their own tests; here they only need to
+// answer so the route's persistence and plan handling can be checked.
 vi.mock("@/lib/agents/battle", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/agents/battle")>();
   return {
     ...actual,
+    runBattleGenerate: vi.fn(async () => ({
+      directions: store.current.battle?.directions ?? [],
+      trace: fakeTrace,
+    })),
     runBattleMerge: vi.fn(),
     runBattleRevise: vi.fn(),
   };
@@ -145,9 +162,11 @@ describe("POST /api/projects/[id]/modules/brand_battle — choose", () => {
     expect(body.context.personality.traits).toEqual(directions[0]!.personality);
     expect(body.version).toBe(5);
     expect(body.chosen_direction_id).toBe("a");
-    expect(body.plan.steps.find((s: { module: string }) => s.module === "brand_battle").status).toBe(
-      "complete",
-    );
+    const statusOf = (module: string) =>
+      body.plan.steps.find((step: { module: string }) => step.module === module).status;
+    // The decision belongs to the critique step, so choosing closes both (ADR-023).
+    expect(statusOf("brand_battle")).toBe("complete");
+    expect(statusOf("battle_critique")).toBe("complete");
     expect(store.current.workflowState).toBe("WORKFLOW_PLANNING");
   });
 
@@ -236,6 +255,19 @@ describe("POST /api/projects/[id]/modules/brand_battle — choose", () => {
 
     expect(response.status).toBe(404);
     expect(store.current.version).toBe(4);
+  });
+
+  it("hands the critique back to the workflow after a fresh battle", async () => {
+    const response = await post({ action: "regenerate", note: "None of these fit our tone." });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    const statusOf = (module: string) =>
+      body.plan.steps.find((step: { module: string }) => step.module === module).status;
+    expect(statusOf("brand_battle")).toBe("complete");
+    // Pending, not skipped: the client runs the critique step next (ADR-023).
+    expect(statusOf("battle_critique")).toBe("pending");
+    expect(store.current.workflowState).toBe("POSITIONING");
   });
 
   it("refuses a module that has no runner yet", async () => {

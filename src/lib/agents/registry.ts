@@ -62,10 +62,29 @@ export const MODULE_REGISTRY: Record<ModuleName, ModuleSpec> = {
     loadingLabel: "Diagnosing your brand…",
     implemented: false,
   },
+  /*
+   * The Battle is two steps, not one (ADR-023): generation is the expensive
+   * call, and splitting it keeps each request well inside maxDuration and lets
+   * a failed critique be retried without paying for the directions again.
+   */
   brand_battle: {
     name: "brand_battle",
     label: "Compete strategic directions",
     requires: ["problem.statement", "audience.primary", "product.description"],
+    // Directions are proposals, not context: nothing is written until the user chooses.
+    produces: [],
+    applicableStates: ALL_STATES,
+    needsUserDecision: false,
+    cost: "slow",
+    state: "POSITIONING",
+    loadingLabel: "Competing three strategic directions…",
+    implemented: true,
+  },
+  battle_critique: {
+    name: "battle_critique",
+    label: "Challenge the directions",
+    requires: ["problem.statement", "audience.primary"],
+    // The user's choice at the end of this step is what writes the context.
     produces: [
       "selected_direction",
       "positioning.category",
@@ -73,12 +92,13 @@ export const MODULE_REGISTRY: Record<ModuleName, ModuleSpec> = {
       "positioning.differentiator",
       "positioning.value_proposition",
       "positioning.competitive_angle",
+      "personality.traits",
     ],
     applicableStates: ALL_STATES,
     needsUserDecision: true,
-    cost: "slow",
-    state: "POSITIONING",
-    loadingLabel: "Competing three strategic directions…",
+    cost: "fast",
+    state: "CRITIQUE",
+    loadingLabel: "The critic is reviewing the three directions…",
     implemented: true,
   },
   audience_shifter: {

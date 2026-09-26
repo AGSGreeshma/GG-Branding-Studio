@@ -129,7 +129,8 @@ export const POST = withErrors<Params>(async (request, { params }, meta) => {
 
   switch (body.action) {
     case "regenerate": {
-      // The whole module runs again, without streaming: one loading message covers it.
+      // Generation only (ADR-023). The client then runs the critique step,
+      // exactly as it would after the first battle.
       battle = await runBattleModule({
         projectId: project.id,
         context,
@@ -138,6 +139,9 @@ export const POST = withErrors<Params>(async (request, { params }, meta) => {
         note: body.note ?? null,
       });
       await saveModuleResult(project.id, "brand_battle", battle);
+      plan = setStepStatus(plan, "brand_battle", "complete");
+      plan = setStepStatus(plan, "battle_critique", "pending");
+      await updateProjectWorkflow(project.id, { plan, workflowState: "POSITIONING" });
       break;
     }
 
@@ -251,6 +255,7 @@ export const POST = withErrors<Params>(async (request, { params }, meta) => {
       }
 
       plan = completeStep(plan, "brand_battle");
+      plan = completeStep(plan, "battle_critique");
       await updateProjectWorkflow(project.id, { plan, workflowState: "WORKFLOW_PLANNING" });
       logEvent("info", "battle.direction_chosen", {
         request_id: meta.requestId,
@@ -262,9 +267,9 @@ export const POST = withErrors<Params>(async (request, { params }, meta) => {
     }
   }
 
-  if (body.action !== "choose") {
+  if (body.action === "merge" || body.action === "revise") {
     // Still the user's move.
-    plan = setStepStatus(plan, "brand_battle", "awaiting_decision");
+    plan = setStepStatus(plan, "battle_critique", "awaiting_decision");
     await updateProjectWorkflow(project.id, { plan, workflowState: "USER_DECISION" });
   }
 
