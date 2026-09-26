@@ -15,7 +15,12 @@
           "value_proposition": "Pick teammates on evidence, then make the split explicit before the work begins."
         },
         "audience_focus": "Students who have been let down by a teammate and want that not to happen again",
-        "personality": ["Straight-talking", "Fair", "Practical", "Protective"],
+        "personality": [
+          "Straight-talking",
+          "Fair",
+          "Practical",
+          "Protective"
+        ],
         "tagline_direction": "Proof and fairness: what you finished, and what you owe this team",
         "strengths": [
           "Useful in the very first project, before any record exists",
@@ -25,7 +30,11 @@
           "Two ideas in one can blur the pitch",
           "The agreement step adds friction at the moment a team is most excited"
         ],
-        "why_this_lens": "The record is the wedge; the agreement is what makes it useful on day one."
+        "why_this_lens": "The record is the wedge; the agreement is what makes it useful on day one.",
+        "obvious_ideas_rejected": [
+          "A five-star rating system for teammates — every marketplace bolts ratings onto profiles, and students would game it within one term.",
+          "A productivity tracker for group projects — the obvious management framing, which students experience as surveillance."
+        ]
       },
       "merge_note": "Kept the evidence-based record from A as the core claim and took the start-of-project agreement from C to solve A's cold-start problem. Dropped C's framing as an admin layer."
     }

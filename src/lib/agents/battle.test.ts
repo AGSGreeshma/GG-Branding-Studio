@@ -156,6 +156,33 @@ describe("runBattleGenerate", () => {
     expect(trace.model).toBe("test-primary-model");
   });
 
+  it("keeps at most three rejected obvious ideas per direction", async () => {
+    useModel({
+      directions: [
+        {
+          ...firstGenerate.directions[0],
+          obvious_ideas_rejected: ["One — a", "one — a", "Two — b", "Three — c", "Four — d"],
+        },
+        firstGenerate.directions[1],
+        firstGenerate.directions[2],
+      ],
+    });
+
+    const { directions } = await runBattleGenerate(slice);
+
+    expect(directions[0]!.obvious_ideas_rejected).toEqual(["One — a", "Two — b", "Three — c"]);
+  });
+
+  it("asks the model to name the predictable ideas before writing its own", async () => {
+    const model = useModel(firstGenerate);
+
+    await runBattleGenerate(slice);
+
+    const system = JSON.stringify(model.doGenerateCalls[0]?.prompt);
+    expect(system).toContain("obvious_ideas_rejected");
+    expect(system).toContain("almost anyone would reach for first");
+  });
+
   it("passes a regeneration note into the prompt", async () => {
     const model = useModel(firstGenerate);
 

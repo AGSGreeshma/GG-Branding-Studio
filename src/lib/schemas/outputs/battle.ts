@@ -46,6 +46,13 @@ export const BattleDirectionSchema = z.object({
   risks: z.array(z.string()),
   /** Why this lens argues for this direction (§11.3 "why"). */
   why_this_lens: z.string(),
+  /**
+   * The obvious directions this lens considered and deliberately avoided, each
+   * written as "<the obvious idea> — <why it is predictable>" (ADR-026).
+   * Kept as flat strings so the schema stays strict-mode friendly; the UI shows
+   * them under "What we ruled out". 2–3 entries, clamped in code.
+   */
+  obvious_ideas_rejected: z.array(z.string()),
 });
 export type BattleDirection = z.infer<typeof BattleDirectionSchema>;
 

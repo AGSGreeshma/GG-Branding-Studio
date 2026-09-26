@@ -20,6 +20,8 @@ import {
 const MIN_TRAITS = 3;
 const MAX_TRAITS = 5;
 const MAX_LIST = 3;
+/** "What we ruled out": 2–3 entries is the useful range (ADR-026). */
+const MAX_REJECTED = 3;
 
 function clampScore(value: number): number {
   if (!Number.isFinite(value)) return 5;
@@ -58,6 +60,7 @@ function normaliseDirection(direction: BattleDirection): BattleDirection {
     personality: cleanList(direction.personality, MAX_TRAITS),
     strengths: cleanList(direction.strengths, MAX_LIST),
     risks: cleanList(direction.risks, MAX_LIST),
+    obvious_ideas_rejected: cleanList(direction.obvious_ideas_rejected, MAX_REJECTED),
   };
 }
 

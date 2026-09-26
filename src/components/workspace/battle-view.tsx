@@ -132,6 +132,8 @@ export function BattleView() {
   const version = useBrandStore((state) => state.version);
   const context = useBrandStore((state) => state.context);
   const decisionPrompt = useBrandStore((state) => state.decisionPrompt);
+  const plan = useBrandStore((state) => state.plan);
+  const workflowStatus = useBrandStore((state) => state.workflowStatus);
 
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -155,6 +157,19 @@ export function BattleView() {
     battle.critique?.critiques.find((entry) => entry.direction_id === id);
 
   const recommendedId = battle.critique?.recommendation.direction_id;
+
+  /*
+   * The critique is its own workflow step (ADR-023), so the directions are on
+   * screen before it finishes. Say what is happening rather than showing three
+   * cards with a silent gap where the critic should be.
+   */
+  const critiqueStep = plan.steps.find((step) => step.module === "battle_critique");
+  const critiquePending =
+    battle.critique === null &&
+    critiqueStep !== undefined &&
+    critiqueStep.status !== "complete" &&
+    critiqueStep.status !== "skipped";
+  const critiqueFailed = critiquePending && (critiqueStep?.status === "failed" || workflowStatus === "error");
 
   async function send(action: BattleAction) {
     setPending(action.action);
@@ -229,6 +244,17 @@ export function BattleView() {
 
       {error ? <ErrorState message={error} /> : null}
       {busy ? <LoadingStatus message={ACTION_MESSAGES[pending as BattleAction["action"]]} /> : null}
+
+      {critiquePending && !busy ? (
+        critiqueFailed ? (
+          <p className="rounded-lg border border-border bg-card/60 px-3 py-2 text-xs text-muted-foreground">
+            The critic didn&apos;t finish reviewing these directions. Your directions are saved —
+            use Try again above to run just the review.
+          </p>
+        ) : (
+          <LoadingStatus message="The critic is reviewing the three directions…" />
+        )
+      ) : null}
 
       <ul className="grid gap-4 xl:grid-cols-3">
         {battle.directions.map((direction) => {
@@ -345,9 +371,31 @@ export function BattleView() {
                   </div>
                 ) : (
                   <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
-                    No critique for this version yet.
+                    {critiquePending
+                      ? "The critic is still reviewing this one."
+                      : "No critique for this version yet."}
                   </p>
                 )}
+
+                {direction.obvious_ideas_rejected.length > 0 ? (
+                  <details className="group rounded-lg border border-border/70 bg-background/60">
+                    <summary className="cursor-pointer list-none rounded-lg px-3 py-2 text-xs font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+                      <span className="flex items-center justify-between">
+                        What we ruled out
+                        <span className="text-muted-foreground group-open:hidden">Show</span>
+                        <span className="hidden text-muted-foreground group-open:inline">Hide</span>
+                      </span>
+                    </summary>
+                    {/* The obvious directions this lens rejected before writing its own (ADR-026). */}
+                    <ul className="flex flex-col gap-1.5 border-t border-border/70 px-3 py-2.5">
+                      {direction.obvious_ideas_rejected.map((idea) => (
+                        <li key={idea} className="text-xs leading-snug text-muted-foreground">
+                          {idea}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : null}
 
                 <WhyDisclosure
                   direction={direction}

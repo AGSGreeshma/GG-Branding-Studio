@@ -16,7 +16,11 @@
             "value_proposition": "Pick teammates on evidence instead of hope."
           },
           "audience_focus": "Students who have already been burned by a teammate dropping out",
-          "personality": ["Straight-talking", "Rigorous", "Fair"],
+          "personality": [
+            "Straight-talking",
+            "Rigorous",
+            "Fair"
+          ],
           "tagline_direction": "Proof over promises: language about what someone has finished, not who they say they are",
           "strengths": [
             "Turns the vague fear of an unreliable teammate into something checkable",
@@ -26,7 +30,12 @@
             "First-year students with no record look unhireable",
             "A reliability score can feel like surveillance"
           ],
-          "why_this_lens": "The sharpest wedge here is evidence of follow-through, which no group chat can offer."
+          "why_this_lens": "The sharpest wedge here is evidence of follow-through, which no group chat can offer.",
+          "obvious_ideas_rejected": [
+            "A five-star rating system for teammates — every marketplace bolts ratings onto profiles, and students would game it within one term.",
+            "LinkedIn for students — the obvious category grab, which means competing with LinkedIn on its own ground.",
+            "A skills-matching algorithm — the default answer for any \"find people\" product, and it says nothing about whether someone shows up."
+          ]
         },
         {
           "id": "b",
@@ -39,7 +48,12 @@
             "value_proposition": "Describe the thing you want to build and assemble a crew around it."
           },
           "audience_focus": "Ambitious students with an idea and no team yet",
-          "personality": ["Energetic", "Ambitious", "Playful", "Direct"],
+          "personality": [
+            "Energetic",
+            "Ambitious",
+            "Playful",
+            "Direct"
+          ],
           "tagline_direction": "Film-set language: calls, crews, credits and premieres",
           "strengths": [
             "Gives the product an identity nothing else on campus has",
@@ -49,7 +63,12 @@
             "The metaphor may read as creative-only and put engineers off",
             "Needs enough projects posted to feel alive"
           ],
-          "why_this_lens": "A distinctive world makes students want to be seen using it, which is how campus products spread."
+          "why_this_lens": "A distinctive world makes students want to be seen using it, which is how campus products spread.",
+          "obvious_ideas_rejected": [
+            "A campus social network with a projects tab — the safe framing every student app starts from, and it dies without daily use.",
+            "Swipe-to-match for teammates — the reflex metaphor for pairing people, and it makes a real commitment feel disposable.",
+            "Friendly pastel study-buddy branding — the visual default for student tools, so it looks like every app already on their phone."
+          ]
         },
         {
           "id": "c",
@@ -62,7 +81,11 @@
             "value_proposition": "Agree who does what up front, so nobody carries the whole project alone."
           },
           "audience_focus": "Students stuck in assigned coursework groups they did not choose",
-          "personality": ["Warm", "Practical", "Protective"],
+          "personality": [
+            "Warm",
+            "Practical",
+            "Protective"
+          ],
           "tagline_direction": "Plain, reassuring language about fairness and carrying your share",
           "strengths": [
             "Speaks to the pain the founder actually described",
@@ -72,7 +95,12 @@
             "Sounds like an admin tool rather than something students want",
             "Harder to make appealing before a bad experience happens"
           ],
-          "why_this_lens": "Students do not want a network; they want not to be let down again."
+          "why_this_lens": "Students do not want a network; they want not to be let down again.",
+          "obvious_ideas_rejected": [
+            "A group-chat replacement — the predictable \"students already use WhatsApp\" answer, which fights a habit instead of a problem.",
+            "A productivity tracker for group projects — the obvious management framing, which students experience as surveillance.",
+            "An \"empowering collaboration\" platform — the phrase every student tool uses, and it promises nothing anyone can check."
+          ]
         }
       ]
     },
@@ -89,11 +117,26 @@
             "value_proposition": "Show you finish, and the good teams come to you."
           },
           "audience_focus": "Students who deliver and want it to be visible",
-          "personality": ["Blunt", "Confident", "Numerate"],
+          "personality": [
+            "Blunt",
+            "Confident",
+            "Numerate"
+          ],
           "tagline_direction": "Scoreboard language, owned by the student rather than imposed on them",
-          "strengths": ["Instantly understandable", "Rewards the students you most want on the platform"],
-          "risks": ["A single number invites gaming", "Punishing for anyone who had one bad semester"],
-          "why_this_lens": "A single legible signal is the fastest way into a crowded campus market."
+          "strengths": [
+            "Instantly understandable",
+            "Rewards the students you most want on the platform"
+          ],
+          "risks": [
+            "A single number invites gaming",
+            "Punishing for anyone who had one bad semester"
+          ],
+          "why_this_lens": "A single legible signal is the fastest way into a crowded campus market.",
+          "obvious_ideas_rejected": [
+            "A verified-skills badge system — the standard credential play, and badges say what you can do, not whether you finish.",
+            "A leaderboard of top students — the obvious gamification move, which rewards the already-visible and discourages everyone else.",
+            "A recruiter-facing talent pool — the predictable monetisation framing, which changes who the product is really for."
+          ]
         },
         {
           "id": "b",
@@ -106,11 +149,27 @@
             "value_proposition": "Find people who want to build the same thing this week."
           },
           "audience_focus": "Hackathon-minded students who work in bursts",
-          "personality": ["Kinetic", "Informal", "Optimistic", "Communal"],
+          "personality": [
+            "Kinetic",
+            "Informal",
+            "Optimistic",
+            "Communal"
+          ],
           "tagline_direction": "Late-night making, pizza, deadlines and shipping",
-          "strengths": ["Natural fit with hackathon culture", "Creates repeatable moments to market around"],
-          "risks": ["Excludes semester-long coursework", "Depends on local density of active students"],
-          "why_this_lens": "Culture, not features, is what makes students bring their friends."
+          "strengths": [
+            "Natural fit with hackathon culture",
+            "Creates repeatable moments to market around"
+          ],
+          "risks": [
+            "Excludes semester-long coursework",
+            "Depends on local density of active students"
+          ],
+          "why_this_lens": "Culture, not features, is what makes students bring their friends.",
+          "obvious_ideas_rejected": [
+            "A hackathon listings board — the obvious utility framing, and listings are a commodity nobody feels loyal to.",
+            "\"Build your dream team\" language — the phrase every team-formation tool opens with, and it promises an outcome the product cannot guarantee.",
+            "A Discord server with structure — the default community answer, which inherits Discord's noise problem."
+          ]
         },
         {
           "id": "c",
@@ -123,11 +182,26 @@
             "value_proposition": "Make the split explicit before resentment sets in."
           },
           "audience_focus": "Students in mandatory coursework groups",
-          "personality": ["Calm", "Even-handed", "Supportive"],
+          "personality": [
+            "Calm",
+            "Even-handed",
+            "Supportive"
+          ],
           "tagline_direction": "Language about fairness, clarity and carrying your share",
-          "strengths": ["Addresses the stated pain directly", "Useful from the first minute, with no network needed"],
-          "risks": ["Feels like paperwork", "Little reason to open it between projects"],
-          "why_this_lens": "The audience's real fear is being left carrying the work, not being unable to find people."
+          "strengths": [
+            "Addresses the stated pain directly",
+            "Useful from the first minute, with no network needed"
+          ],
+          "risks": [
+            "Feels like paperwork",
+            "Little reason to open it between projects"
+          ],
+          "why_this_lens": "The audience's real fear is being left carrying the work, not being unable to find people.",
+          "obvious_ideas_rejected": [
+            "A peer-review score after each project — the obvious accountability mechanism, which turns classmates into assessors.",
+            "A contract template generator — the predictable \"make it formal\" answer, and students will not sign paperwork with friends.",
+            "A workload-splitting calculator — the obvious fairness tool, which measures effort instead of building trust."
+          ]
         }
       ]
     }
