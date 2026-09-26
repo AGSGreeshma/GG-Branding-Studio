@@ -1099,6 +1099,11 @@ This is what turns a working app into a portfolio piece.
 | F11 | [~] | `pnpm eval:antigeneric` takes each fixture through Battle → Worlds → Anti-Generic and reports lexicon hits and scores before and after, with a fixed judge |
 | ADR-028 | [x] | The module actions route is a dispatcher; each module owns its action service |
 
+> **Real-model check, 2026-09-26 (production, `gpt-6-sol` + `gpt-6-luna`).** The full Stage A path runs end to end: interview → battle → critique → choose → three worlds → explore two more → choose → two Anti-Generic rounds → apply, with the plan advancing correctly at every step. All three worlds came back with valid palettes (AAA contrast), allowlisted fonts and zero check failures, and the engine rewrote 4 of 4 lines with genericity risk improving on 3 of them.
+> - **Watch the Five Worlds latency: 41.5 s against `maxDuration = 60`.** It is one primary call producing three complete worlds, which is the largest single output in the product. If it creeps up — a slower primary model, five worlds in one call — split it the way the Battle was split (ADR-023) rather than raising the ceiling.
+> - Battle generate 29 s, battle critique 9 s, Anti-Generic round 1 15 s, round 2 8 s. Everything else has comfortable headroom.
+> - The deterministic lexicon found **no** hits in the pipeline's own output on any run. The word lists are earning their place as a guard rather than a workhorse: it is the critic that catches weak differentiation in generated copy. They will matter more for the Consistency Guardian, which reads text the user wrote.
+
 > **Real-model check, 2026-09-25 14:20 IST (production + local).** Production runs `MODEL_PRIMARY=gpt-6-sol`, `MODEL_FAST=gpt-6-luna`.
 > - **`gpt-6-luna` has credit; `gpt-6-sol` does not** (`insufficient_quota` / `credit_balance_exhausted`). So on production every fast-tier step runs for real — the interview and the AI-written plan reasons both work — and **Brand Battle fails in 0.36 s with the friendly `AI_PROVIDER_UNAVAILABLE` message**, not a crash or a 30 s hang (ADR-015 doing its job). Fixing this is a billing change, not a code change.
 > - Running the primary tier on `gpt-6-luna` locally proved the rest: **the large Battle schemas validate on a real model with zero repair retries**, three divergent directions came back, and the critic produced real objections and clichés.
