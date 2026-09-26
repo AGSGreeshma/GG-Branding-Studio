@@ -150,3 +150,10 @@ next-env.d.ts
 .pnpm-debug.log*
 # local env files (only .env.example is committed)
 .env*.local
+
+.vercel
+.env*
+
+# Raw eval output: only the summary is committed (CLAUDE.md)
+/evals/results/*
+!/evals/results/summary.md

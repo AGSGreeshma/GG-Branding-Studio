@@ -1,0 +1,26 @@
+{
+  "id": "college-teammates",
+  "label": "College teammates",
+  "stage": "idea",
+  "why_this_fixture": "The demo-path idea (plan §23.1). A crowded student-app space where the obvious answers (ratings, LinkedIn for students, skills matching) are easy to reach for, so it exposes a model that only rewords the predictable direction.",
+  "slice": {
+    "problem": {
+      "statement": "Students cannot tell in advance who will actually do the work on a group project",
+      "importance": "A teammate who disappears can cost a whole semester grade, and there is no way to see it coming",
+      "existing_alternatives": ["Group chats", "Asking friends", "Whoever sits nearby"]
+    },
+    "audience": {
+      "primary": ["College students", "Hackathon teams"],
+      "secondary": [],
+      "needs": ["A way to judge reliability before committing to a team"],
+      "pain_points": ["Teammates drop out halfway", "Nobody replies in group chats"],
+      "behaviors": ["Form teams through group chats and word of mouth"]
+    },
+    "product": {
+      "description": "An app that helps college students find reliable teammates for hackathons and side projects",
+      "features": ["Profiles showing past projects", "Reliability signals from previous teammates"],
+      "benefits": []
+    },
+    "assumptions": ["Most users are second and third year students"]
+  }
+}

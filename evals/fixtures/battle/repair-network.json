@@ -1,0 +1,30 @@
+{
+  "id": "repair-network",
+  "label": "Local repair network",
+  "stage": "idea",
+  "why_this_fixture": "A physical, local, two-sided service rather than software. Tests whether a model can position something offline without falling into marketplace boilerplate (\"connecting X with Y\"), and whether the three lenses can find genuinely different audiences (owners, repairers, the council).",
+  "slice": {
+    "problem": {
+      "statement": "People throw away appliances that could be fixed because finding someone trustworthy to fix them is harder than buying new",
+      "importance": "A working washing machine goes to landfill over a twenty-pound part, and the owner pays for a new one",
+      "existing_alternatives": ["Buying a replacement", "Facebook groups", "The manufacturer's repair line", "A friend who is handy"]
+    },
+    "audience": {
+      "primary": ["Households in small towns with a broken appliance"],
+      "secondary": ["Retired engineers and tradespeople who repair as side work"],
+      "needs": ["Knowing whether a repair is worth it before committing money"],
+      "pain_points": [
+        "No way to judge whether a quote is fair",
+        "Waiting a week for someone who may not turn up",
+        "Being told it is cheaper to replace"
+      ],
+      "behaviors": ["Ask in local Facebook groups", "Default to buying new when unsure"]
+    },
+    "product": {
+      "description": "A local network that connects people with broken appliances to vetted repairers in their town, with an upfront view of whether the repair is worth doing",
+      "features": ["Vetted local repairers", "A repair-or-replace estimate before booking", "Fixed call-out pricing"],
+      "benefits": []
+    },
+    "assumptions": ["Starting in one town before expanding"]
+  }
+}

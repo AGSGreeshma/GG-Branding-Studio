@@ -1,0 +1,30 @@
+{
+  "id": "freelance-tax",
+  "label": "Freelance tax set-aside",
+  "stage": "idea",
+  "why_this_fixture": "A saturated fintech category with a house style of its own (\"effortless\", \"stress-free\", \"take control of your finances\"). The hardest test for genericity: a weak model will produce three variations of the same reassuring money app.",
+  "slice": {
+    "problem": {
+      "statement": "Freelance designers spend the tax they owe because it sits in the same account as everything else",
+      "importance": "The bill arrives once a year and is large enough to end a freelance career",
+      "existing_alternatives": ["A second bank account", "A spreadsheet", "Hoping", "An accountant once a year"]
+    },
+    "audience": {
+      "primary": ["Freelance designers and illustrators in their first three years"],
+      "secondary": ["Accountants who onboard them"],
+      "needs": ["Knowing what is actually theirs to spend"],
+      "pain_points": [
+        "Invoices arrive in irregular lumps",
+        "The tax bill is a shock every January",
+        "Bookkeeping feels like admin they did not sign up for"
+      ],
+      "behaviors": ["Invoice through their bank", "Avoid opening finance apps"]
+    },
+    "product": {
+      "description": "A tool that watches incoming invoice payments and moves the tax share into a separate pot automatically",
+      "features": ["Connects to their bank", "Sets aside a percentage per payment", "Shows a single safe-to-spend number"],
+      "benefits": []
+    },
+    "assumptions": ["Users are sole traders, not limited companies"]
+  }
+}
