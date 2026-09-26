@@ -145,7 +145,44 @@ describe("generateStructured", () => {
 
     const call = model.doGenerateCalls[0];
     expect(call?.temperature).toBeUndefined();
-    expect(call?.providerOptions).toEqual({ openai: { reasoningEffort: "medium" } });
+    // reasoningSummary: null cancels the provider's "detailed" default (ADR-024).
+    expect(call?.providerOptions).toEqual({
+      openai: { reasoningEffort: "medium", reasoningSummary: null },
+    });
+  });
+
+  it("asks for a reasoning summary only when OPENAI_REASONING_SUMMARY requests one", async () => {
+    vi.stubEnv("MODEL_FAST_REASONING_EFFORT", "low");
+    vi.stubEnv("OPENAI_REASONING_SUMMARY", "detailed");
+    const model = useModel(reply('{"ok":true,"message":"hi"}'));
+
+    await generateStructured(baseOptions);
+
+    expect(model.doGenerateCalls[0]?.providerOptions).toEqual({
+      openai: { reasoningEffort: "low", reasoningSummary: "detailed" },
+    });
+  });
+
+  it("requests a summary even when no reasoning effort is configured", async () => {
+    vi.stubEnv("MODEL_FAST_REASONING_EFFORT", "");
+    vi.stubEnv("OPENAI_REASONING_SUMMARY", "auto");
+    const model = useModel(reply('{"ok":true,"message":"hi"}'));
+
+    await generateStructured(baseOptions);
+
+    expect(model.doGenerateCalls[0]?.providerOptions).toEqual({
+      openai: { reasoningSummary: "auto" },
+    });
+  });
+
+  it("falls back to off for an unrecognised summary setting", async () => {
+    vi.stubEnv("MODEL_FAST_REASONING_EFFORT", "");
+    vi.stubEnv("OPENAI_REASONING_SUMMARY", "verbose");
+    const model = useModel(reply('{"ok":true,"message":"hi"}'));
+
+    await generateStructured(baseOptions);
+
+    expect(model.doGenerateCalls[0]?.providerOptions).toBeUndefined();
   });
 
   it("lets a call override the tier's reasoning effort", async () => {
@@ -155,7 +192,7 @@ describe("generateStructured", () => {
     await generateStructured({ ...baseOptions, reasoningEffort: "none" });
 
     expect(model.doGenerateCalls[0]?.providerOptions).toEqual({
-      openai: { reasoningEffort: "none" },
+      openai: { reasoningEffort: "none", reasoningSummary: null },
     });
   });
 

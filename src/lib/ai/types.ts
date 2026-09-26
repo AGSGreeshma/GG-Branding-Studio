@@ -10,6 +10,13 @@ export type ModelTier = "primary" | "fast";
 export type ReasoningEffort = "none" | "low" | "medium";
 
 /**
+ * Whether to ask a reasoning model for a summary of its thinking.
+ * `off` is the default: the summary costs output tokens and latency, and
+ * nothing in the product reads it (ADR-024).
+ */
+export type ReasoningSummary = "off" | "auto" | "detailed";
+
+/**
  * One model call as recorded in `workflow_runs` (CLAUDE.md, AI rule 10).
  * llm.ts returns it; callers persist it with recordRun so agents stay pure.
  */

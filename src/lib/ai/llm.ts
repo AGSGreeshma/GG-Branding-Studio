@@ -7,12 +7,13 @@ import {
   NoOutputGeneratedError,
   Output,
   TypeValidationError,
+  type JSONValue,
   type LanguageModelUsage,
 } from "ai";
 import { z } from "zod";
 import { AppError, type ErrorCode } from "@/lib/schemas/errors";
 import { describeError, logEvent } from "@/lib/services/log";
-import type { LlmTrace, ModelTier, ReasoningEffort } from "./types";
+import type { LlmTrace, ModelTier, ReasoningEffort, ReasoningSummary } from "./types";
 
 /*
  * The ONLY place that calls OpenAI (CLAUDE.md). Structured output via AI SDK 7
@@ -48,6 +49,36 @@ export function reasoningEffortForTier(tier: ModelTier): ReasoningEffort | null 
   if (value === "none" || value === "low" || value === "medium") return value;
   logEvent("warn", "llm.bad_reasoning_effort", { tier, value });
   return null;
+}
+
+/**
+ * Reasoning summaries are off unless `OPENAI_REASONING_SUMMARY` asks for one.
+ * The provider otherwise defaults to a `detailed` summary whenever a reasoning
+ * effort is set, which we pay for in output tokens and never read (ADR-024).
+ */
+export function reasoningSummarySetting(): ReasoningSummary {
+  const raw = process.env.OPENAI_REASONING_SUMMARY?.trim().toLowerCase();
+  if (!raw || raw === "off") return "off";
+  if (raw === "auto" || raw === "detailed") return raw;
+  logEvent("warn", "llm.bad_reasoning_summary", { value: raw });
+  return "off";
+}
+
+/** The `providerOptions.openai` block, or undefined when there is nothing to say. */
+export function buildProviderOptions(
+  effort: ReasoningEffort | null,
+  summary: ReasoningSummary,
+): { openai: Record<string, JSONValue> } | undefined {
+  const openai: Record<string, JSONValue> = {};
+  if (effort) openai.reasoningEffort = effort;
+  if (summary === "off") {
+    // Explicit null overrides the provider's "detailed" default; only needed
+    // when an effort is set, since otherwise it asks for no summary anyway.
+    if (effort) openai.reasoningSummary = null;
+  } else {
+    openai.reasoningSummary = summary;
+  }
+  return Object.keys(openai).length > 0 ? { openai } : undefined;
 }
 
 export interface GenerateStructuredOptions<S extends z.ZodType> {
@@ -188,7 +219,7 @@ export async function generateStructured<S extends z.ZodType>(
   const schemaName = (options.schemaName ?? agent).replace(/[^a-zA-Z0-9_-]/g, "_");
   const sendTemperature = temperature !== undefined && temperatureAllowed();
   const effort = options.reasoningEffort ?? reasoningEffortForTier(tier);
-  const providerOptions = effort ? { openai: { reasoningEffort: effort } } : undefined;
+  const providerOptions = buildProviderOptions(effort, reasoningSummarySetting());
 
   const startedAt = Date.now();
   let tokensIn: number | null = null;
