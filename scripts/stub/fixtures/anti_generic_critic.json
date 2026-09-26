@@ -1,0 +1,148 @@
+{
+  "agent": "anti_generic_critic",
+  "tier": "fast",
+  "invalid_first": false,
+  "outputs": [
+    {
+      "findings": [
+        {
+          "target_path": "positioning.statement",
+          "issues": [
+            {
+              "kind": "vague_claim",
+              "evidence": "a visible record of the projects they actually finished",
+              "severity": "medium",
+              "note": "Visible to whom, and at what moment? The sentence describes a feature rather than the decision it changes."
+            }
+          ],
+          "scores": {
+            "genericity_risk": 4,
+            "distinctiveness": 7,
+            "audience_fit": 8,
+            "specificity": 7
+          },
+          "alternatives": ["Name the moment a student decides whether to join a team"],
+          "verdict": "Strong and specific, but it describes the feature rather than the decision."
+        },
+        {
+          "target_path": "positioning.differentiator",
+          "issues": [
+            {
+              "kind": "weak_differentiation",
+              "evidence": "Reliability is evidenced by completed projects and teammate confirmations",
+              "severity": "medium",
+              "note": "Any product could add confirmations; the defensible part is that the record belongs to the student and follows them."
+            }
+          ],
+          "scores": {
+            "genericity_risk": 5,
+            "distinctiveness": 6,
+            "audience_fit": 7,
+            "specificity": 7
+          },
+          "alternatives": ["Say who owns the record and what makes it hard to fake"],
+          "verdict": "Credible, but a competitor could copy the mechanism next term."
+        },
+        {
+          "target_path": "positioning.value_proposition",
+          "issues": [
+            {
+              "kind": "cliche",
+              "evidence": "Pick teammates on evidence instead of hope.",
+              "severity": "medium",
+              "note": "The evidence-versus-hope contrast is a well-worn construction in product copy."
+            },
+            {
+              "kind": "vague_claim",
+              "evidence": "on evidence",
+              "severity": "medium",
+              "note": "Evidence of what, seen where? The line asks the reader to fill in the specifics."
+            }
+          ],
+          "scores": {
+            "genericity_risk": 7,
+            "distinctiveness": 5,
+            "audience_fit": 7,
+            "specificity": 5
+          },
+          "alternatives": [
+            "Describe what the student sees before they say yes",
+            "Use the student's own words for the risk they are taking"
+          ],
+          "verdict": "The weakest line: a neat contrast that any teammate-finding app could print."
+        },
+        {
+          "target_path": "identity.naming_direction",
+          "issues": [
+            {
+              "kind": "predictable_naming",
+              "evidence": "Words from record-keeping and proof: entries, receipts, ledgers, marks.",
+              "severity": "low",
+              "note": "The territory is coherent, though ledger language is crowded in fintech and may read as finance."
+            }
+          ],
+          "scores": {
+            "genericity_risk": 4,
+            "distinctiveness": 7,
+            "audience_fit": 6,
+            "specificity": 8
+          },
+          "alternatives": ["Test the territory against a student saying the name out loud"],
+          "verdict": "A real territory with one risk: it borrows from finance rather than study."
+        }
+      ]
+    },
+    {
+      "findings": [
+        {
+          "target_path": "positioning.statement",
+          "issues": [],
+          "scores": {
+            "genericity_risk": 3,
+            "distinctiveness": 8,
+            "audience_fit": 8,
+            "specificity": 8
+          },
+          "alternatives": [],
+          "verdict": "Specific to the moment of joining a team, and hard to copy."
+        },
+        {
+          "target_path": "positioning.differentiator",
+          "issues": [],
+          "scores": {
+            "genericity_risk": 3,
+            "distinctiveness": 8,
+            "audience_fit": 8,
+            "specificity": 8
+          },
+          "alternatives": [],
+          "verdict": "Ownership of the record is now the claim, which is defensible."
+        },
+        {
+          "target_path": "positioning.value_proposition",
+          "issues": [],
+          "scores": {
+            "genericity_risk": 3,
+            "distinctiveness": 7,
+            "audience_fit": 9,
+            "specificity": 8
+          },
+          "alternatives": [],
+          "verdict": "Now describes what the student sees, in their own terms."
+        },
+        {
+          "target_path": "identity.naming_direction",
+          "issues": [],
+          "scores": {
+            "genericity_risk": 3,
+            "distinctiveness": 7,
+            "audience_fit": 8,
+            "specificity": 8
+          },
+          "alternatives": [],
+          "verdict": "Moved out of finance language and into study language."
+        }
+      ]
+    }
+  ]
+}

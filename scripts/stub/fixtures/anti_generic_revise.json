@@ -1,0 +1,26 @@
+{
+  "agent": "anti_generic_revise",
+  "tier": "primary",
+  "invalid_first": false,
+  "outputs": [
+    {
+      "revisions": [
+        {
+          "target_path": "positioning.differentiator",
+          "improved": "The record belongs to the student and is confirmed by the people they worked with, so it cannot be written by the product or bought.",
+          "reason": "Moved the claim from the mechanism, which anyone can copy, to who owns the record and why it is hard to fake."
+        },
+        {
+          "target_path": "positioning.value_proposition",
+          "improved": "Before you say yes to a team, see what each person finished last term and who confirmed it.",
+          "reason": "Replaced the evidence-versus-hope contrast with the actual moment and the actual thing a student sees."
+        },
+        {
+          "target_path": "identity.naming_direction",
+          "improved": "Words students already use about finishing coursework together: terms, credits, standing, handed in.",
+          "reason": "Kept the idea of a record but moved the vocabulary out of finance and into study, where the audience lives."
+        }
+      ]
+    }
+  ]
+}
