@@ -85,6 +85,15 @@ export const POST = withErrors<Params>(async (request, { params }, meta) => {
       }
 
       const spec = moduleSpec(step.module);
+      // The interview has its own endpoint and its own completion rule (§7.4);
+      // reaching it here means the interview simply is not finished yet.
+      if (step.module === "interviewer") {
+        throw new AppError("VALIDATION_ERROR", {
+          message: `Interview still in progress for project ${project.id}`,
+          publicMessage: "There are still a few questions to answer before the next step.",
+          retryable: false,
+        });
+      }
       if (!spec.implemented) {
         throw new AppError("VALIDATION_ERROR", {
           message: `Module ${step.module} is not implemented yet`,
