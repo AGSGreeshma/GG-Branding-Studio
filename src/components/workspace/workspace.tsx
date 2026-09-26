@@ -14,11 +14,13 @@ import type { RunSummary } from "@/lib/db/queries";
 import { MODULE_LABELS } from "@/lib/services/workflow-engine";
 import { BrandStoreProvider, useBrandStore, type WorkspaceSnapshot } from "@/state/brand-store";
 import { useWorkflowStream } from "@/state/use-workflow-stream";
+import { AntiGenericView } from "./anti-generic-view";
 import { BattleView } from "./battle-view";
 import { BrandContextPanel } from "./brand-context-panel";
 import { HowTheAiWorked } from "./how-the-ai-worked";
 import { InterviewPanel } from "./interview-panel";
 import { WorkflowSidebar } from "./workflow-sidebar";
+import { WorldsView } from "./worlds-view";
 
 /*
  * Three-panel workspace (plan §9): Workflow · AI Workspace · Brand Context.
@@ -77,6 +79,8 @@ function WorkspaceShell({ runs }: { runs: RunSummary[] }) {
   const name = useBrandStore((state) => state.project.name);
   const plan = useBrandStore((state) => state.plan);
   const battle = useBrandStore((state) => state.battle);
+  const worlds = useBrandStore((state) => state.worlds);
+  const antiGeneric = useBrandStore((state) => state.antiGeneric);
   const interviewComplete = useBrandStore((state) => state.complete);
   const planFallbackReason = useBrandStore((state) => state.planFallbackReason);
   const workflow = useWorkflowStream();
@@ -87,6 +91,10 @@ function WorkspaceShell({ runs }: { runs: RunSummary[] }) {
   const runningModule = plan.steps.find((step) => step.status === "running")?.module ?? null;
   const awaitingDecision = plan.steps.some((step) => step.status === "awaiting_decision");
   const showsBattle = (battle?.directions.length ?? 0) > 0;
+  const showsWorlds = (worlds?.worlds.length ?? 0) > 0;
+  const showsAntiGeneric = (antiGeneric?.fields.length ?? 0) > 0;
+  /* The workspace shows the step that is live, newest first. */
+  const hasResult = showsBattle || showsWorlds || showsAntiGeneric;
 
   // The next step to run on our own: never a failed one (that is the user's
   // Try Again) and never one that isn't built yet.
@@ -115,11 +123,11 @@ function WorkspaceShell({ runs }: { runs: RunSummary[] }) {
   // Refresh the server-rendered run list once a module finishes (E11).
   const refreshed = useRef(false);
   useEffect(() => {
-    if (workflow.status === "idle" && showsBattle && !refreshed.current) {
+    if (workflow.status === "idle" && hasResult && !refreshed.current) {
       refreshed.current = true;
       router.refresh();
     }
-  }, [workflow.status, showsBattle, router]);
+  }, [workflow.status, hasResult, router]);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -186,8 +194,10 @@ function WorkspaceShell({ runs }: { runs: RunSummary[] }) {
           ) : null}
 
           {showsBattle ? <BattleView /> : null}
+          {showsWorlds ? <WorldsView /> : null}
+          {showsAntiGeneric ? <AntiGenericView /> : null}
 
-          {interviewDone && !showsBattle && workflow.status === "idle" && !autoRunnable ? (
+          {interviewDone && !hasResult && workflow.status === "idle" && !autoRunnable ? (
             <div className="flex flex-col items-start gap-3">
               <EmptyState
                 title={pendingStep ? "That step isn't built yet" : "Workflow complete"}
@@ -207,7 +217,7 @@ function WorkspaceShell({ runs }: { runs: RunSummary[] }) {
             </div>
           ) : null}
 
-          {showsBattle && workflow.status !== "running" ? <ActivityLog /> : null}
+          {hasResult && workflow.status !== "running" ? <ActivityLog /> : null}
 
           <HowTheAiWorked runs={runs} />
         </main>

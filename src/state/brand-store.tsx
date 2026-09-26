@@ -11,7 +11,9 @@ import {
   type InterviewTurn,
 } from "@/lib/schemas/interview";
 import type { ProjectSummary } from "@/lib/schemas/project";
+import type { AntiGenericResult } from "@/lib/schemas/outputs/anti-generic";
 import type { BattleResult } from "@/lib/schemas/outputs/battle";
+import type { WorldsResult } from "@/lib/schemas/outputs/worlds";
 import type { WorkflowEvent } from "@/lib/services/events";
 import type { WorkflowPlan } from "@/lib/schemas/workflow";
 
@@ -32,6 +34,10 @@ export interface WorkspaceSnapshot {
   plan: WorkflowPlan;
   /** The current Brand Battle, if one has run (plan §14.3). */
   battle: BattleResult | null;
+  /** The identity worlds, if they have been explored (plan §14.5). */
+  worlds: WorldsResult | null;
+  /** The Anti-Generic Engine's rounds, if it has run (plan §14.6). */
+  antiGeneric: AntiGenericResult | null;
 }
 
 /** One line in the workspace activity log while a module runs (plan §18.4). */
@@ -75,8 +81,11 @@ export interface BrandState extends WorkspaceSnapshot {
   failWorkflow: (message: string) => void;
   finishWorkflow: () => void;
   setBattle: (battle: BattleResult) => void;
-  applyBattleResponse: (payload: {
-    battle: BattleResult;
+  /** Applies any module action response: new result, context, version and plan. */
+  applyModuleResponse: (payload: {
+    battle?: BattleResult;
+    worlds?: WorldsResult;
+    anti_generic?: AntiGenericResult;
     context: BrandContext;
     version: number;
     plan: WorkflowPlan;
@@ -201,16 +210,18 @@ export function createBrandStore(snapshot: WorkspaceSnapshot): StoreApi<BrandSta
             : state,
         ),
       setBattle: (battle) => set({ battle }),
-      applyBattleResponse: (payload) =>
-        set({
-          battle: payload.battle,
+      applyModuleResponse: (payload) =>
+        set((state) => ({
+          battle: payload.battle ?? state.battle,
+          worlds: payload.worlds ?? state.worlds,
+          antiGeneric: payload.anti_generic ?? state.antiGeneric,
           context: payload.context,
           version: payload.version,
           plan: payload.plan,
           workflowStatus: "idle",
           workflowMessage: null,
           workflowError: null,
-        }),
+        })),
 
       applyEvent: (event) =>
         set((state) => {
@@ -256,6 +267,8 @@ export function createBrandStore(snapshot: WorkspaceSnapshot): StoreApi<BrandSta
               return {
                 plan: event.plan,
                 battle: event.battle ?? state.battle,
+                worlds: event.worlds ?? state.worlds,
+                antiGeneric: event.anti_generic ?? state.antiGeneric,
                 workflowStatus: "idle",
                 workflowMessage: null,
               };

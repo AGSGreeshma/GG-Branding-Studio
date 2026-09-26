@@ -24,6 +24,7 @@ import type { BattleSlice } from "@/lib/prompts/battle";
 import { isAppError } from "@/lib/schemas/errors";
 import type { BattleDirection, BattleScores } from "@/lib/schemas/outputs/battle";
 import { MODEL_CONFIGS, type ModelConfig } from "./configs";
+import { writeSection } from "./summary";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixturesDir = join(here, "fixtures", "battle");
@@ -270,7 +271,7 @@ function buildSummary(results: RunResult[], args: Args, startedAt: Date): string
   }
 
   const lines: string[] = [];
-  lines.push("# Brand Battle — model comparison");
+  lines.push("## Brand Battle — model comparison");
   lines.push("");
   lines.push(`_Generated ${startedAt.toISOString()} by \`pnpm eval:battle\` (plan §21.1)._`);
   lines.push("");
@@ -285,7 +286,7 @@ function buildSummary(results: RunResult[], args: Args, startedAt: Date): string
   );
   lines.push("");
 
-  lines.push("## Configurations");
+  lines.push("### Configurations");
   lines.push("");
   lines.push("| Config | Generator | Critic | Runs OK | Distinct. ↑ | Generic risk ↓ | Audience fit ↑ | Clarity ↑ | Specificity ↑ | Strategy ↑ | Clichés/run ↓ | Generate | Challenge | Repairs |");
   lines.push("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|");
@@ -304,7 +305,7 @@ function buildSummary(results: RunResult[], args: Args, startedAt: Date): string
   }
   lines.push("");
 
-  lines.push("## Per fixture");
+  lines.push("### Per fixture");
   lines.push("");
   lines.push("| Fixture | Config | OK | Diverged | Distinct categories | Distinct audiences | Ruled out / direction | Objections | Distinct. | Generic risk | Recommended |");
   lines.push("|---|---|---|---|---|---|---|---|---|---|---|");
@@ -317,7 +318,7 @@ function buildSummary(results: RunResult[], args: Args, startedAt: Date): string
 
   const failures = results.filter((result) => !result.ok);
   if (failures.length) {
-    lines.push("## Failures");
+    lines.push("### Failures");
     lines.push("");
     for (const failure of failures) {
       lines.push(`- \`${failure.config}\` on \`${failure.fixture}\`: **${failure.errorCode}** — ${failure.errorMessage}`);
@@ -325,7 +326,7 @@ function buildSummary(results: RunResult[], args: Args, startedAt: Date): string
     lines.push("");
   }
 
-  lines.push("## What the directions actually were");
+  lines.push("### What the directions actually were");
   lines.push("");
   for (const result of results.filter((entry) => entry.directions.length)) {
     lines.push(`**${result.fixture} · \`${result.config}\`**`);
@@ -336,7 +337,7 @@ function buildSummary(results: RunResult[], args: Args, startedAt: Date): string
     lines.push("");
   }
 
-  lines.push("## How to read this");
+  lines.push("### How to read this");
   lines.push("");
   lines.push("- **Distinctiveness** and **genericity risk** are the two that matter for this product: the whole argument against one-prompt branding is that the obvious answer is generic.");
   lines.push("- **Distinct categories / audiences** is the deterministic check (§14.3), not the model's opinion. 1/3 means the three lenses produced one idea three times, whatever the scores say.");
@@ -391,7 +392,7 @@ async function main(): Promise<void> {
   const rawPath = join(resultsDir, `battle-${stamp}.json`);
   writeFileSync(rawPath, JSON.stringify({ startedAt, judge: args.judge, results }, null, 2));
   const summaryPath = join(resultsDir, "summary.md");
-  writeFileSync(summaryPath, buildSummary(results, args, startedAt));
+  writeSection(summaryPath, "battle", buildSummary(results, args, startedAt));
 
   console.log(`\nRaw:     ${rawPath}`);
   console.log(`Summary: ${summaryPath}`);

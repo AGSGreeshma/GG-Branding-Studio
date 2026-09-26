@@ -175,7 +175,7 @@ export function BattleView() {
     setPending(action.action);
     setError(null);
     try {
-      const { project, applyBattleResponse } = store.getState();
+      const { project, applyModuleResponse } = store.getState();
       const response = await fetch(`/api/projects/${project.id}/modules/brand_battle`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -196,7 +196,7 @@ export function BattleView() {
         setError("We couldn't read the studio's answer. Your previous work is safe.");
         return;
       }
-      applyBattleResponse(parsed.data);
+      applyModuleResponse(parsed.data);
       setCombineIds([]);
       setCombineNote("");
       setReviseFor(null);

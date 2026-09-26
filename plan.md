@@ -498,6 +498,8 @@ Internal signals unless the UI explicitly defines what they mean.
 > - Store before/after and score deltas; show them in the "How the AI worked" drawer.
 > - Thresholds are tuned with the eval harness (§21) and recorded in the Decision Log.
 
+> Tuned 2026-09-26 (ADR-029) with `pnpm eval:antigeneric`. The thresholds above stay as written, because the fix for over-triggering is not a higher bar but a check on the result: **a rewrite is kept only when the critic scores it better than the text it replaced**, and the final round verifies rather than rewriting. Evidence: before the change, 6 runs rewrote every field and left genericity risk worse in 3 of them.
+
 ---
 
 ## 14. Module specifications
@@ -554,7 +556,7 @@ Explores different audiences without changing the product (e.g. Students → A, 
 > Added: a fixed "invariant value" line (what stays the same for all audiences) is shown at the top, making the "protect the underlying value" requirement visible.
 
 ### 14.5 One Idea, Five Worlds (identity exploration)
-> v1 build: **3 worlds** in one call (ADR-008, M1). Keep the name; M2 restores all five and the UI offers "Explore 2 more worlds".
+> v1 build (shipped 2026-09-26): **3 worlds** in one call (ADR-008, M1), with "Explore 2 more worlds" adding w4 and w5 in a second request — so all five are reachable today, and M2's work is the quality of them rather than the count. Each world carries a naming direction with sample names, three voice rules with a sample line, a palette, a typeface pairing, imagery and composition notes, audience perception, risks, opportunities, and the predictable identities it rejected (ADR-026). Colour and font output is checked in code (§14.8): hex values are repaired where possible, and contrast failures or non-allowlisted families are flagged on the card rather than hidden.
 
 **Answers:** *"What could this brand feel and look like in different identity directions?"* Worlds selected dynamically (e.g. Technical, Playful, Editorial, Premium, Bold). Runs **after** a strategic direction is chosen and inherits it.
 **Per world:** positioning, personality, naming direction, tagline direction, voice, visual mood, audience perception, risks, opportunities.
@@ -567,6 +569,8 @@ Available throughout the workflow.
 **Checks:** names, taglines, positioning, descriptions, voice, messaging, launch copy, visual concepts.
 **Detects:** clichés, buzzwords, empty claims, predictable language, generic startup phrases, weak differentiation, copycat positioning, overused naming patterns.
 **Process:** AI output → genericity analysis → problems → reasons → alternative → improved output.
+
+> Shipped 2026-09-26 (ADR-027): `src/lib/lexicon/` holds the deterministic layer (buzzwords, empty claims, generic startup phrases, overused naming shapes, each with a severity and a note written for the user). The critic call adds the judgement a word list cannot make — weak differentiation, copycat positioning, vague claims — and never rewrites; a separate reviser rewrites only the flagged fields. The loop triggers on §13.5's thresholds or any high-severity lexicon hit, runs one round per request, and stops at `ANTI_GENERIC_MAX_ROUNDS` (default 2). Locked fields are critiqued but never rewritten, and nothing reaches the Brand Context until the user accepts it.
 
 Example: *"Empowering the future with innovative technology."* → no specific audience, no concrete problem, no meaningful differentiation, common startup language, no memorable idea. Suggested direction: *describe the specific transformation the product creates for its audience.*
 
@@ -950,7 +954,7 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 
 **E. Workspace:** [x] E1 Layout · [x] E2 Workflow sidebar · [x] E3 AI conversation (interview cards) · [x] E4 Brand Context panel · [x] E5 Decision cards · [x] E6 Result cards · [x] E7 Loading states · [x] E8 Error states · [x] E9 Responsive workspace · [x] E10 Streaming client hook (new) · [x] E11 "How the AI worked" drawer (new) · [x] E12 Empty states (new)
 
-**F. AI foundation:** [x] F1 LLM provider abstraction · [x] F2 AI request service · [x] F3 Prompt registry · [x] F4 Structured output parser · [x] F5 Schema validation · [x] F6 Retry mechanism · [x] F7 Error handling · [~] F8 Token/context management · [x] F9 AI logging · [~] F10 Critic/evaluator service (new — the Battle critic scores per §13.5; a shared service comes with Anti-Generic) · [~] F11 Eval harness (new — `pnpm eval:battle` built, ADR-025; the full run is M3)
+**F. AI foundation:** [x] F1 LLM provider abstraction · [x] F2 AI request service · [x] F3 Prompt registry · [x] F4 Structured output parser · [x] F5 Schema validation · [x] F6 Retry mechanism · [x] F7 Error handling · [~] F8 Token/context management · [x] F9 AI logging · [~] F10 Critic/evaluator service (new — the Battle critic scores per §13.5; a shared service comes with Anti-Generic) · [~] F11 Eval harness (new — `pnpm eval:battle` and `pnpm eval:antigeneric` built, ADR-025; the full plan-level run is M3)
 
 **G. Brand Context:** [x] G1 Schema · [x] G2 Storage · [x] G3 Retrieval · [x] G4 Updates · [x] G5 Versioning · [x] G6 Locked decisions (enforced in code on every write; Lock offered when a direction is chosen) · [x] G7 Display · [~] G8 Provenance & stale detection (new — provenance written, stale detection later) · [x] G9 Optimistic concurrency (new)
 
@@ -964,9 +968,9 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 
 **L. Audience Shifter:** L1 Audience discovery · L2 Profile · L3 Value proposition · L4 Positioning · L5 Messaging · L6 Comparison · L7 UI · L8 Selection
 
-**M. Five Worlds:** M1 World generation · M2 Personality · M3 Positioning · M4 Naming direction · M5 Voice · M6 Visual direction · M7 Risks · M8 Evaluation · M9 UI (mini visual cards) · M10 Selection
+**M. Five Worlds:** [x] M1 World generation · [x] M2 Personality · [x] M3 Positioning (inherited, not re-decided) · [x] M4 Naming direction · [x] M5 Voice · [x] M6 Visual direction · [x] M7 Risks · [~] M8 Evaluation (deterministic colour/font checks + a distinctness check; a scored critic is M2) · [x] M9 UI (mini visual cards) · [x] M10 Selection
 
-**N. Anti-Generic Engine:** N1 Generic language detector · N2 Cliché detection · N3 Buzzword detection · N4 Weak differentiation · N5 Naming critique · N6 Tagline critique · N7 Positioning critique · N8 Messaging critique · N9 Alternative generation · N10 Workflow integration · N11 Critique UI · N12 Lexicon files + severity (new) · N13 Revision loop with thresholds (new)
+**N. Anti-Generic Engine:** [x] N1 Generic language detector · [x] N2 Cliché detection · [x] N3 Buzzword detection · [x] N4 Weak differentiation · [x] N5 Naming critique · [x] N6 Tagline critique · [x] N7 Positioning critique · [~] N8 Messaging critique (the field is covered; there is no messaging to judge until the Launch Kit) · [x] N9 Alternative generation · [x] N10 Workflow integration · [x] N11 Critique UI · [x] N12 Lexicon files + severity (new) · [x] N13 Revision loop with thresholds (new)
 
 **O. Brand Builder:** O1 Gather approved decisions · O2 Resolve conflicts · O3 Final positioning · O4 Personality · O5 Naming system · O6 Tagline · O7 Voice · O8 Messaging · O9 Visual brief · O10 Brand rules · O11 Final consistency check · O12 Brand System generation
 
@@ -978,7 +982,7 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 
 **S. File / website analysis:** S1 File upload · S2 File extraction · S3 Content parsing · S4 Website input · S5 Website content extraction · S6 Analysis from external material · S7 Source tracking · S8 Error handling · S9 SSRF + size limits (new)
 
-**T. Visual intelligence:** T1 Visual brief · T2 Typography (free fonts, rendered specimens) · T3 Color mood (hex + contrast check) · T4 Imagery · T5 Composition · T6 Symbols · T7 Avoidance list · T8 Optional visual generation · T9 Visual direction UI
+**T. Visual intelligence:** [~] T1 Visual brief (per world; the consolidated brief comes with the Brand Builder) · [x] T2 Typography (free fonts, rendered specimens) · [x] T3 Color mood (hex + contrast check) · [x] T4 Imagery · [x] T5 Composition · T6 Symbols · T7 Avoidance list · T8 Optional visual generation (M4) · [x] T9 Visual direction UI
 
 **U. Export:** U1 Brand System export · U2 Launch Kit export · U3 PDF generation · U4 Copy-to-clipboard · U5 Shareable view · U6 Export testing · U7 Markdown + JSON export (new)
 
@@ -1004,8 +1008,8 @@ All tasks start `[ ]`. Expand each using §1.1 when you start it. New tasks are 
 
 The Stage A journey from a chosen direction to something the user can publish and defend.
 
-- **Five Worlds** (M1–M10): identity exploration from the chosen direction, 3 worlds to start, with palette swatches, a font sample and a headline per world.
-- **Anti-Generic Engine** (N1–N13): deterministic lexicon (`lib/lexicon`) + critic call, revision of flagged fields only, before/after stored and shown.
+- ~~**Five Worlds** (M1–M10)~~ **done 2026-09-26**: identity exploration from the chosen direction, 3 worlds plus "Explore 2 more", with palette swatches, a live font specimen and a headline per world.
+- ~~**Anti-Generic Engine** (N1–N13)~~ **done 2026-09-26**: deterministic lexicon (`lib/lexicon`) + critic call, revision of flagged fields only, before/after stored and shown.
 - **Brand Builder** (O1–O12): the decisions become one Brand System, with the relationship checks in its own output.
 - **Brand System UI** (P1–P13): read, edit, lock every part of the system.
 - **Founder-to-Launch Kit** (Q1–Q9) and **Consistency Guardian** (R1–R11) with inline highlights and a suggested revision.
@@ -1086,6 +1090,14 @@ This is what turns a working app into a portfolio piece.
 | ADR-024 | [x] | `OPENAI_REASONING_SUMMARY` (default off) stops paying for summaries nothing reads |
 | ADR-025 | [x] | `pnpm eval:battle` + three Stage A fixtures + committed `evals/results/summary.md` |
 | ADR-026 | [x] | Each lens names and rejects the predictable ideas first; shown under "What we ruled out". 12/12 real runs diverged 3/3 |
+| **M1 Phase 4** | | **Five Worlds + Anti-Generic, 2026-09-26** |
+| M1–M7, M9, M10 | [x] | Three worlds in one call, "Explore 2 more" for w4/w5, Combine, Revise, Choose. Cards render the real palette, a live Google-Fonts specimen and a headline in the world's own voice |
+| T2, T3, T9 | [x] | `src/lib/visual`: hex repair, WCAG contrast grading, free-font allowlist. Problems are flagged on the card, never silently accepted (§14.8) |
+| N1–N3, N5–N7, N12 | [x] | `src/lib/lexicon`: buzzwords, empty claims, startup phrases and naming shapes, each with a severity and a note. 26 tests, including the false-positive cases |
+| N4, N9, N13 | [x] | Critic (cold, fast tier) scores and objects; a separate reviser rewrites only flagged, unlocked fields; §13.5 thresholds; `ANTI_GENERIC_MAX_ROUNDS` (default 2), one round per request (ADR-027) |
+| N10, N11 | [x] | Runs as a workflow step and as a service other modules can call. The UI shows before/after per field with the lexicon hits highlighted in place, the reason for each change, and the score movement |
+| F11 | [~] | `pnpm eval:antigeneric` takes each fixture through Battle → Worlds → Anti-Generic and reports lexicon hits and scores before and after, with a fixed judge |
+| ADR-028 | [x] | The module actions route is a dispatcher; each module owns its action service |
 
 > **Real-model check, 2026-09-25 14:20 IST (production + local).** Production runs `MODEL_PRIMARY=gpt-6-sol`, `MODEL_FAST=gpt-6-luna`.
 > - **`gpt-6-luna` has credit; `gpt-6-sol` does not** (`insufficient_quota` / `credit_balance_exhausted`). So on production every fast-tier step runs for real — the interview and the AI-written plan reasons both work — and **Brand Battle fails in 0.36 s with the friendly `AI_PROVIDER_UNAVAILABLE` message**, not a crash or a 30 s hang (ADR-015 doing its job). Fixing this is a billing change, not a code change.
@@ -1210,6 +1222,7 @@ Record architectural decisions here (see `CLAUDE.md`). Format: **ID · Date · D
 | ID | Date | Decision | Reason | Status |
 |---|---|---|---|---|
 | ADR-001 | 2026-09-24 | Hybrid orchestrator: LLM proposes, code validates, default plans as fallback (§7.3) | Reliability for the live demo while keeping AI-chosen workflows | Accepted |
+| ADR-029 | 2026-09-26 | **A revision is kept only if the critic scores it better than what it replaced, and the last round verifies instead of rewriting.** The comparison uses one composite quality number (distinctiveness + audience fit + specificity − genericity risk) from the same critic. A rolled-back rewrite is shown to the user, not hidden. **Alternative:** raise §13.5's thresholds so the loop triggers less often. **Impact:** `ANTI_GENERIC_MAX_ROUNDS` counts total rounds, the last of which makes no primary call | The first eval run (`pnpm eval:antigeneric`, 6 runs) rewrote 4 of 4 fields every time and made genericity risk **worse** in 3 of 6 runs: the critic's scores cluster at 5–6, so §13.5's thresholds always fire, and the reviser then degrades text that was already fine. Raising the thresholds would hide the problem; refusing to keep a worse version fixes it, and costs nothing extra because the next round's critique was already being paid for | Accepted |
 | ADR-002 | 2026-09-24 | Zod schemas in `src/lib/schemas` are canonical for server, client and AI output | One codebase; no schema drift. Replaces the original Pydantic + OpenAPI proposal | Accepted |
 | ADR-003 | 2026-09-24 | Per-request streaming: each module run streams its own events; the client drives the loop (§18.4) | Serverless functions can't hold a long-lived stream | Accepted |
 | ADR-004 | 2026-09-24 | Brand Context extended with messaging, candidate names, meta and provenance (§12) | Launch Kit and explainability need fields the original schema lacked | Accepted |
@@ -1235,6 +1248,8 @@ Record architectural decisions here (see `CLAUDE.md`). Format: **ID · Date · D
 | ADR-024 | 2026-09-26 | Reasoning summaries are **off by default**, controlled by `OPENAI_REASONING_SUMMARY` (`off`/`auto`/`detailed`). "Off" sends `reasoningSummary: null` | The provider asks for a `detailed` summary whenever a reasoning effort is set (§20.2). Nothing in the product reads it, so it was pure output-token cost on every call | Accepted |
 | ADR-025 | 2026-09-26 | **Eval harness starts with a Brand Battle model comparison**: `pnpm eval:battle` over `evals/fixtures/battle/`, with `--judge` so one critic model scores every configuration. Raw results stay local; `evals/results/summary.md` is committed | Model choice was being made on impression. The comparison is also the portfolio evidence that this system beats one-prompt generation (§0). A model grading its own output is not a comparison, hence the fixed judge | Accepted |
 | ADR-026 | 2026-09-26 | **Divergence comes from the prompt, not the temperature.** Each lens first names 2–3 predictable directions and why they are predictable, stores them in `obvious_ideas_rejected`, then writes something that avoids them. The UI shows them under "What we ruled out"; the code divergence check stays as the safety net | gpt-6 models ignore `temperature` (§20.2), so the hot-generator setting no longer buys variety. Measured over 12 real runs: every run diverged 3/3 on both category and audience, and every lens rejected 3 obvious ideas | Accepted |
+| ADR-027 | 2026-09-26 | **The Anti-Generic Engine runs one revision round per request, and its rewrites are applied only when the user accepts them.** Thresholds are §13.5's; the round cap is `ANTI_GENERIC_MAX_ROUNDS` (default 2). The engine is a service (`services/anti-generic.ts`) that any module can call, not just its own workflow step. **Alternative:** loop inside one request and write the improved text straight to the Brand Context. **Impact:** the step can sit in `running` across requests, and the workspace shows before/after with per-field accept | Two rounds in one request is two primary calls plus two critic calls, which is the same `maxDuration` problem ADR-023 solved for the Battle. Applying silently would break "AI recommends, the user decides" on the fields the user cares most about | Accepted |
+| ADR-028 | 2026-09-26 | `POST /api/projects/[id]/modules/[module]` is a dispatcher; each module's actions live in `services/modules/<module>-actions.ts` | The route was heading for 500 lines of three modules' business logic, against §18.2's "route handlers stay thin". Moving them also makes each module's actions testable without a request | Accepted |
 
 
 ## 28. Open questions

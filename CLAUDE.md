@@ -68,6 +68,7 @@ pnpm lint         # eslint
 pnpm typecheck    # tsc --noEmit
 pnpm test         # vitest
 pnpm eval:battle  # model comparison for Brand Battle -> evals/results/
+pnpm eval:antigeneric  # before/after for the Anti-Generic Engine -> evals/results/
 pnpm db:push      # apply Drizzle schema
 pnpm seed:demo    # seeded example project
 ```
@@ -83,6 +84,7 @@ src/lib/prompts/  one file per agent: system, buildUser(), PROMPT_VERSION, tier,
 src/lib/ai/       llm.ts — the ONLY place that calls OpenAI
 src/lib/services/ context-manager, workflow-engine, evaluator, exporter, events, rate-limit
 src/lib/lexicon/  deterministic cliché/buzzword/naming detection
+src/lib/visual/   deterministic hex, WCAG contrast and free-font allowlist checks
 src/lib/db/       Drizzle schema, client, queries
 evals/            fixtures, runner, results
 plan.md           product plan, specs, task tree, decision log

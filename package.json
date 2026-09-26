@@ -14,7 +14,8 @@
     "seed:demo": "tsx scripts/seed-demo.ts",
     "stub": "node scripts/stub/server.mjs",
     "dev:stub": "node scripts/stub/dev.mjs",
-    "eval:battle": "node --conditions=react-server --import tsx evals/run-battle.ts"
+    "eval:battle": "node --conditions=react-server --import tsx evals/run-battle.ts",
+    "eval:antigeneric": "node --conditions=react-server --import tsx evals/run-antigeneric.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.73",

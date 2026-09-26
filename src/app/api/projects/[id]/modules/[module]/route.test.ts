@@ -271,7 +271,7 @@ describe("POST /api/projects/[id]/modules/brand_battle — choose", () => {
   });
 
   it("refuses a module that has no runner yet", async () => {
-    const response = await post({ action: "regenerate" }, "five_worlds");
+    const response = await post({ action: "regenerate" }, "launch_kit");
 
     expect(response.status).toBe(422);
     expect((await response.json()).error.message).toContain("next build");

@@ -1,5 +1,7 @@
 import { z } from "zod";
+import { AntiGenericResultSchema } from "@/lib/schemas/outputs/anti-generic";
 import { BattleResultSchema } from "@/lib/schemas/outputs/battle";
+import { WorldsResultSchema } from "@/lib/schemas/outputs/worlds";
 import { ErrorBodySchema } from "@/lib/schemas/errors";
 import { ModuleNameSchema, WorkflowPlanSchema } from "@/lib/schemas/workflow";
 
@@ -52,8 +54,10 @@ export const WorkflowEventSchema = z.discriminatedUnion("type", [
     run_id: z.string().nullable(),
     module: ModuleNameSchema,
     plan: WorkflowPlanSchema,
-    /** Present for modules that produce a battle; other modules add their own. */
+    /** Each module's own result, null for the ones this step did not touch. */
     battle: BattleResultSchema.nullable(),
+    worlds: WorldsResultSchema.nullable(),
+    anti_generic: AntiGenericResultSchema.nullable(),
   }),
   z.object({
     type: z.literal("decision.required"),

@@ -9,11 +9,14 @@ import {
   updateProjectWorkflow,
 } from "@/lib/db/queries";
 import { AppError } from "@/lib/schemas/errors";
+import { AntiGenericResultSchema } from "@/lib/schemas/outputs/anti-generic";
 import { BattleResultSchema, type BattleResult } from "@/lib/schemas/outputs/battle";
 import type { ModuleName } from "@/lib/schemas/workflow";
 import { withErrors } from "@/lib/services/route";
 import { eventStream } from "@/lib/services/stream";
+import { runAntiGenericModule } from "@/lib/services/modules/anti-generic";
 import { runBattleCritiqueModule, runBattleModule } from "@/lib/services/modules/brand-battle";
+import { runWorldsModule } from "@/lib/services/modules/five-worlds";
 import {
   assertTransition,
   completeStep,
@@ -80,7 +83,15 @@ export const POST = withErrors<Params>(async (request, { params }, meta) => {
 
       const step = nextRunnableStep(plan);
       if (!step) {
-        emit({ type: "module.completed", run_id: null, module: "brand_builder", plan, battle: null });
+        emit({
+          type: "module.completed",
+          run_id: null,
+          module: "brand_builder",
+          plan,
+          battle: null,
+          worlds: null,
+          anti_generic: null,
+        });
         return;
       }
 
@@ -132,6 +143,8 @@ export const POST = withErrors<Params>(async (request, { params }, meta) => {
               module: "brand_battle",
               plan,
               battle,
+              worlds: null,
+              anti_generic: null,
             });
             break;
           }
@@ -167,6 +180,8 @@ export const POST = withErrors<Params>(async (request, { params }, meta) => {
               module: "battle_critique",
               plan,
               battle,
+              worlds: null,
+              anti_generic: null,
             });
             emit({
               type: "decision.required",
@@ -175,6 +190,89 @@ export const POST = withErrors<Params>(async (request, { params }, meta) => {
                 "Three directions are strategically viable. Which one should this brand take?",
               options: battle.directions.map((direction) => direction.name),
             });
+            break;
+          }
+
+          case "five_worlds": {
+            const worlds = await runWorldsModule({
+              projectId: project.id,
+              context,
+              emit,
+              requestId: meta.requestId,
+            });
+            await saveModuleResult(project.id, "five_worlds", worlds);
+
+            plan = setStepStatus(plan, "five_worlds", "awaiting_decision");
+            await updateProjectWorkflow(project.id, { plan, workflowState: "USER_DECISION" });
+
+            emit({
+              type: "module.completed",
+              run_id: worlds.run_id,
+              module: "five_worlds",
+              plan,
+              battle: null,
+              worlds,
+              anti_generic: null,
+            });
+            emit({
+              type: "decision.required",
+              decision_id: `worlds:${worlds.run_id ?? project.id}`,
+              prompt: "Which of these identity worlds should the brand live in?",
+              options: worlds.worlds.map((world) => world.name),
+            });
+            break;
+          }
+
+          case "anti_generic": {
+            // One round per request (ADR-027): the client calls again while
+            // the engine still has something to fix.
+            const previous = AntiGenericResultSchema.safeParse(
+              await getModuleResult(project.id, "anti_generic"),
+            );
+            const antiGeneric = await runAntiGenericModule({
+              projectId: project.id,
+              context,
+              lockedPaths,
+              previous: previous.success && !previous.data.applied ? previous.data : null,
+              emit,
+              requestId: meta.requestId,
+            });
+            await saveModuleResult(project.id, "anti_generic", antiGeneric);
+
+            const changed = antiGeneric.fields.some((field) => field.current !== field.original);
+            if (!antiGeneric.complete) {
+              // Another round to run: leave the step running and let the
+              // client come back for it.
+              plan = setStepStatus(plan, "anti_generic", "running");
+              await updateProjectWorkflow(project.id, { plan, workflowState: "CRITIQUE" });
+            } else if (changed) {
+              plan = setStepStatus(plan, "anti_generic", "awaiting_decision");
+              await updateProjectWorkflow(project.id, { plan, workflowState: "USER_DECISION" });
+            } else {
+              // Nothing to accept, so nothing to ask about.
+              plan = completeStep(plan, "anti_generic");
+              await updateProjectWorkflow(project.id, { plan, workflowState: "WORKFLOW_PLANNING" });
+            }
+
+            emit({
+              type: "module.completed",
+              run_id: antiGeneric.run_id,
+              module: "anti_generic",
+              plan,
+              battle: null,
+              worlds: null,
+              anti_generic: antiGeneric,
+            });
+            if (antiGeneric.complete && changed) {
+              emit({
+                type: "decision.required",
+                decision_id: `anti_generic:${antiGeneric.run_id ?? project.id}`,
+                prompt: "The engine rewrote some of your brand language. Which changes do you want to keep?",
+                options: antiGeneric.fields
+                  .filter((field) => field.current !== field.original)
+                  .map((field) => field.label),
+              });
+            }
             break;
           }
 
