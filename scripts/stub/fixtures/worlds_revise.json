@@ -1,0 +1,89 @@
+{
+  "agent": "worlds_revise",
+  "tier": "primary",
+  "invalid_first": false,
+  "outputs": [
+    {
+      "world": {
+        "id": "w1",
+        "name": "The Record",
+        "summary": "The same exactness, framed as something a student owns rather than something done to them.",
+        "personality": [
+          "Exact",
+          "Generous",
+          "Dependable"
+        ],
+        "naming_direction": "Words from record-keeping and proof: entries, receipts, ledgers, marks.",
+        "sample_names": [
+          {
+            "name": "Entry",
+            "rationale": "One word from the world of records; short enough to say in a group chat."
+          },
+          {
+            "name": "Standing",
+            "rationale": "What a student builds over time, and what a teammate wants to know about."
+          }
+        ],
+        "tagline_direction": "Flat statements of fact rather than promises — what happened, who confirmed it.",
+        "voice_rules": [
+          "State the fact before the benefit.",
+          "Use numbers where a number exists, and nothing where it doesn't.",
+          "Never describe a person, only what they finished."
+        ],
+        "voice_sample_line": "Four projects finished, and the people you finished them with said so themselves.",
+        "colors": [
+          {
+            "name": "Paper",
+            "hex": "#FBFBF9",
+            "role": "background"
+          },
+          {
+            "name": "Slate",
+            "hex": "#14181F",
+            "role": "text"
+          },
+          {
+            "name": "Mark",
+            "hex": "#1F6F5C",
+            "role": "accent"
+          }
+        ],
+        "typography": [
+          {
+            "role": "headings",
+            "family": "IBM Plex Mono",
+            "rationale": "Monospace reads as a record rather than a pitch."
+          },
+          {
+            "role": "body",
+            "family": "Inter",
+            "rationale": "Neutral enough to disappear behind the facts."
+          }
+        ],
+        "imagery": [
+          "Screenshots of the record itself, never stock photos of students laughing",
+          "Close crops of handwriting, stamps and signatures"
+        ],
+        "composition": [
+          "Left-aligned rows, generous line spacing, no centred hero text",
+          "Rules and dividers instead of cards and shadows"
+        ],
+        "audience_perception": "Serious and slightly institutional — reassuring to someone who has been let down, cold to someone looking for friends.",
+        "risks": [
+          "Can feel like a credit score for people",
+          "Little warmth to attract students who have not yet been burned"
+        ],
+        "opportunities": [
+          "The only student brand that looks like evidence rather than marketing",
+          "Ages well: the record gets more valuable every term"
+        ],
+        "obvious_ideas_rejected": [
+          "A friendly campus-blue app with rounded corners — the default student-product look, so it disappears next to every other one.",
+          "A trust-badge and five-star world — the marketplace pattern, which turns classmates into ratings.",
+          "A hustle-culture world of late nights and grind — predictable for student builders and unrelated to reliability."
+        ]
+      },
+      "change_note": "Flipped the palette to light and reframed the record as shared credit, which keeps the evidence but removes the surveillance feeling."
+    }
+  ]
+}

@@ -1,0 +1,206 @@
+{
+  "agent": "worlds_generate",
+  "tier": "primary",
+  "invalid_first": false,
+  "outputs": [
+    {
+      "worlds": [
+        {
+          "id": "w1",
+          "name": "The Ledger",
+          "summary": "A quiet, exact brand that treats a finished project as a matter of record.",
+          "personality": ["Exact", "Unsentimental", "Dependable"],
+          "naming_direction": "Words from record-keeping and proof: entries, receipts, ledgers, marks.",
+          "sample_names": [
+            {
+              "name": "Entry",
+              "rationale": "One word from the world of records; short enough to say in a group chat."
+            },
+            {
+              "name": "Standing",
+              "rationale": "What a student builds over time, and what a teammate wants to know about."
+            }
+          ],
+          "tagline_direction": "Flat statements of fact rather than promises — what happened, who confirmed it.",
+          "voice_rules": [
+            "State the fact before the benefit.",
+            "Use numbers where a number exists, and nothing where it doesn't.",
+            "Never describe a person, only what they finished."
+          ],
+          "voice_sample_line": "Four projects finished. Three teammates confirmed it. That's the whole profile.",
+          "colors": [
+            { "name": "Slate", "hex": "#0F1115", "role": "background" },
+            { "name": "Paper", "hex": "#F2F4F7", "role": "text" },
+            { "name": "Mark", "hex": "#5EEAD4", "role": "accent" },
+            { "name": "Rule", "hex": "#2A2F3A", "role": "borders and dividers" }
+          ],
+          "typography": [
+            {
+              "role": "headings",
+              "family": "IBM Plex Mono",
+              "rationale": "Monospace reads as a record rather than a pitch."
+            },
+            {
+              "role": "body",
+              "family": "Inter",
+              "rationale": "Neutral enough to disappear behind the facts."
+            }
+          ],
+          "imagery": [
+            "Screenshots of the record itself, never stock photos of students laughing",
+            "Close crops of handwriting, stamps and signatures"
+          ],
+          "composition": [
+            "Left-aligned rows, generous line spacing, no centred hero text",
+            "Rules and dividers instead of cards and shadows"
+          ],
+          "audience_perception": "Serious and slightly institutional — reassuring to someone who has been let down, cold to someone looking for friends.",
+          "risks": [
+            "Can feel like a credit score for people",
+            "Little warmth to attract students who have not yet been burned"
+          ],
+          "opportunities": [
+            "The only student brand that looks like evidence rather than marketing",
+            "Ages well: the record gets more valuable every term"
+          ],
+          "obvious_ideas_rejected": [
+            "A friendly campus-blue app with rounded corners — the default student-product look, so it disappears next to every other one.",
+            "A trust-badge and five-star world — the marketplace pattern, which turns classmates into ratings.",
+            "A hustle-culture world of late nights and grind — predictable for student builders and unrelated to reliability."
+          ]
+        },
+        {
+          "id": "w2",
+          "name": "Crew Room",
+          "summary": "The warm backstage of a theatre: people who have worked together and want to again.",
+          "personality": ["Warm", "Unfussy", "Loyal", "Wry"],
+          "naming_direction": "Backstage and workshop language: crews, call sheets, green rooms, benches.",
+          "sample_names": [
+            {
+              "name": "Green Room",
+              "rationale": "Where the people who are about to make something wait together."
+            },
+            {
+              "name": "Call Sheet",
+              "rationale": "A document that says exactly who is expected and when."
+            },
+            {
+              "name": "The Bench",
+              "rationale": "Who you can call on, without implying a ranking."
+            }
+          ],
+          "tagline_direction": "Spoken, slightly dry lines about turning up for each other.",
+          "voice_rules": [
+            "Write the way a teammate texts, not the way a brand announces.",
+            "Admit the awkward part before offering the fix.",
+            "No exclamation marks; the warmth is in the words."
+          ],
+          "voice_sample_line": "You already know who shows up. This is just somewhere to keep that written down.",
+          "colors": [
+            { "name": "Canvas", "hex": "#FFF8F0", "role": "background" },
+            { "name": "Ink", "hex": "#2A2118", "role": "text" },
+            { "name": "Ember", "hex": "#E4572E", "role": "accent" },
+            { "name": "Sage", "hex": "#6B8F71", "role": "secondary accent" }
+          ],
+          "typography": [
+            {
+              "role": "headings",
+              "family": "Fraunces",
+              "rationale": "A warm serif with enough character to feel handmade."
+            },
+            {
+              "role": "body",
+              "family": "Work Sans",
+              "rationale": "Plain and friendly under an expressive heading."
+            }
+          ],
+          "imagery": [
+            "Hands and workspaces mid-project, faces mostly out of frame",
+            "Pinned notes, whiteboards and half-finished builds"
+          ],
+          "composition": [
+            "Slightly off-grid placement, as though pinned up rather than laid out",
+            "Text over texture, with room left empty"
+          ],
+          "audience_perception": "Approachable and human — feels like a community, which may raise the question of whether it solves anything.",
+          "risks": [
+            "Warmth can read as soft on the reliability problem",
+            "Theatre language may not land with engineering students"
+          ],
+          "opportunities": [
+            "Something students would mention to a friend unprompted",
+            "Makes confirming a teammate feel generous rather than judgemental"
+          ],
+          "obvious_ideas_rejected": [
+            "A campus social network in pastel gradients — the safe student-app look that dies without daily use.",
+            "A sports-team metaphor of drafts and line-ups — the obvious teamwork analogy, and it makes people into picks.",
+            "A productivity world of checklists and streaks — predictable for group work and faintly exhausting."
+          ]
+        },
+        {
+          "id": "w3",
+          "name": "Plain Terms",
+          "summary": "An editorial brand that says the uncomfortable thing out loud, in print-quality type.",
+          "personality": ["Blunt", "Literate", "Calm"],
+          "naming_direction": "Short declarative phrases from everyday speech about commitment.",
+          "sample_names": [
+            {
+              "name": "Who's In",
+              "rationale": "The actual question a student asks before a project starts."
+            },
+            {
+              "name": "Said and Done",
+              "rationale": "Names the gap the product closes, in four syllables."
+            }
+          ],
+          "tagline_direction": "Complete sentences that name the risk, with no hedging.",
+          "voice_rules": [
+            "Say the uncomfortable thing in the first sentence.",
+            "One idea per sentence; no lists of benefits.",
+            "Never use a word a student wouldn't say out loud."
+          ],
+          "voice_sample_line": "Half the people who promise to help won't. Find out before the deadline, not after.",
+          "colors": [
+            { "name": "Newsprint", "hex": "#FFFFFF", "role": "background" },
+            { "name": "Press", "hex": "#111111", "role": "text" },
+            { "name": "Stamp", "hex": "#1D4ED8", "role": "accent" }
+          ],
+          "typography": [
+            {
+              "role": "headings",
+              "family": "Archivo",
+              "rationale": "Tight, newspaper-grade sans that can be set very large."
+            },
+            {
+              "role": "body",
+              "family": "Source Serif 4",
+              "rationale": "Long-form serif that signals something worth reading."
+            }
+          ],
+          "imagery": [
+            "Almost none — type does the work",
+            "Occasional documentary photography, black and white"
+          ],
+          "composition": [
+            "One enormous headline per screen, everything else small",
+            "Strict columns and a visible baseline grid"
+          ],
+          "audience_perception": "Grown-up and a little confrontational — credible, but it asks the reader to face something.",
+          "risks": [
+            "Bluntness can read as pessimism about their classmates",
+            "Type-led design is unforgiving if the words are weak"
+          ],
+          "opportunities": [
+            "Nothing else in the category sounds like an editorial",
+            "The voice carries straight into launch copy without redesign"
+          ],
+          "obvious_ideas_rejected": [
+            "A reassuring \"we've got you\" world — the standard comfort brand, which quietly avoids naming the problem.",
+            "A tech-forward dark interface with charts — the default for anything involving a score.",
+            "A gamified world of badges and levels — predictable for students and trivialises being let down."
+          ]
+        }
+      ]
+    }
+  ]
+}

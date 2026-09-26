@@ -1,0 +1,167 @@
+{
+  "agent": "worlds_explore",
+  "tier": "primary",
+  "invalid_first": false,
+  "outputs": [
+    {
+      "worlds": [
+        {
+          "id": "w4",
+          "name": "Field Notes",
+          "summary": "A researcher's brand: careful observation of how teams actually behave.",
+          "personality": [
+            "Curious",
+            "Precise",
+            "Quietly funny"
+          ],
+          "naming_direction": "Language from fieldwork and observation: notes, samples, findings.",
+          "sample_names": [
+            {
+              "name": "Findings",
+              "rationale": "What you learn about a teammate before you commit."
+            },
+            {
+              "name": "Observed",
+              "rationale": "Short, and it implies evidence rather than opinion."
+            }
+          ],
+          "tagline_direction": "Observations stated as findings, with the sample size implied.",
+          "voice_rules": [
+            "Report what happened before interpreting it.",
+            "Prefer a small true number to a large vague one.",
+            "Let the reader draw the conclusion."
+          ],
+          "voice_sample_line": "Across four projects, the people who replied within a day were the ones who finished.",
+          "colors": [
+            {
+              "name": "Field",
+              "hex": "#F7F6F2",
+              "role": "background"
+            },
+            {
+              "name": "Graphite",
+              "hex": "#1F2421",
+              "role": "text"
+            },
+            {
+              "name": "Marker",
+              "hex": "#B5651D",
+              "role": "accent"
+            }
+          ],
+          "typography": [
+            {
+              "role": "headings",
+              "family": "Newsreader",
+              "rationale": "Reads like a published finding rather than an ad."
+            },
+            {
+              "role": "body",
+              "family": "Karla",
+              "rationale": "Compact and legible for dense notes."
+            }
+          ],
+          "imagery": [
+            "Annotated diagrams and margin notes",
+            "Photographs of objects, not people"
+          ],
+          "composition": [
+            "Two-column layout with a wide margin for notes",
+            "Small type, high information density"
+          ],
+          "audience_perception": "Thoughtful and slightly academic — trustworthy, possibly dry for a first-year student.",
+          "risks": [
+            "Can feel like homework",
+            "Understated to the point of forgettable"
+          ],
+          "opportunities": [
+            "Positions the product as evidence, not opinion",
+            "Gives the brand something to publish"
+          ],
+          "obvious_ideas_rejected": [
+            "A data-dashboard world of graphs and KPIs — the obvious home for anything measured, and it reduces people to metrics.",
+            "A study-hall aesthetic of coffee and highlighters — the standard student stock imagery."
+          ]
+        },
+        {
+          "id": "w5",
+          "name": "The Handshake",
+          "summary": "A brand built on the moment two people agree, treated as something formal and worth marking.",
+          "personality": [
+            "Ceremonial",
+            "Direct",
+            "Fair"
+          ],
+          "naming_direction": "Words for agreements made between equals: terms, pacts, word, shake.",
+          "sample_names": [
+            {
+              "name": "On Terms",
+              "rationale": "Names the agreement without legal coldness."
+            },
+            {
+              "name": "Word",
+              "rationale": "What a student gives, and what this product keeps track of."
+            }
+          ],
+          "tagline_direction": "Short declarations about what each person owes the other.",
+          "voice_rules": [
+            "Address both sides of the agreement, never just the user.",
+            "Name the obligation before the benefit.",
+            "Keep sentences under twelve words."
+          ],
+          "voice_sample_line": "You said you would take the backend. That is now written down, and so is theirs.",
+          "colors": [
+            {
+              "name": "Bone",
+              "hex": "#FAFAF7",
+              "role": "background"
+            },
+            {
+              "name": "Oxblood",
+              "hex": "#3B1F1F",
+              "role": "text"
+            },
+            {
+              "name": "Brass",
+              "hex": "#8A6A3B",
+              "role": "accent"
+            }
+          ],
+          "typography": [
+            {
+              "role": "headings",
+              "family": "Libre Baskerville",
+              "rationale": "Formality without corporate stiffness."
+            },
+            {
+              "role": "body",
+              "family": "Public Sans",
+              "rationale": "Plain civic sans that keeps the terms readable."
+            }
+          ],
+          "imagery": [
+            "Documents, seals and signatures",
+            "Two hands cropped tight, never a stock handshake"
+          ],
+          "composition": [
+            "Centred, symmetrical layouts like a certificate",
+            "Generous margins and one rule per section"
+          ],
+          "audience_perception": "Serious and a little old-fashioned — makes the commitment feel real, may feel heavy for a two-day hackathon.",
+          "risks": [
+            "Formality can deter casual teams",
+            "The certificate look is close to parody if overdone"
+          ],
+          "opportunities": [
+            "Turns the agreement into a shareable artefact",
+            "Distinct from every app in the category"
+          ],
+          "obvious_ideas_rejected": [
+            "A contract-and-compliance world of legal grey — the obvious way to show agreement, and nobody signs it.",
+            "A pinky-promise, playful world — the cute inversion, which undercuts being left with the work."
+          ]
+        }
+      ]
+    }
+  ]
+}

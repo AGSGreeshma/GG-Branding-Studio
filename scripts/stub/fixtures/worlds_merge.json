@@ -1,0 +1,89 @@
+{
+  "agent": "worlds_merge",
+  "tier": "primary",
+  "invalid_first": false,
+  "outputs": [
+    {
+      "world": {
+        "id": "merged",
+        "name": "The Standing Room",
+        "summary": "The exactness of a record, kept in a room where people actually know each other.",
+        "personality": [
+          "Exact",
+          "Warm",
+          "Dependable",
+          "Wry"
+        ],
+        "naming_direction": "Record-keeping words with a human room around them: standing, entry, bench.",
+        "sample_names": [
+          {
+            "name": "Standing",
+            "rationale": "What a student builds, said the way a teammate would say it."
+          },
+          {
+            "name": "The Bench",
+            "rationale": "Who you can call on, without implying a ranking."
+          }
+        ],
+        "tagline_direction": "Flat statements of fact rather than promises — what happened, who confirmed it.",
+        "voice_rules": [
+          "State the fact, then say it the way a teammate would.",
+          "Use numbers where a number exists.",
+          "No exclamation marks; the warmth is in the words."
+        ],
+        "voice_sample_line": "Four projects finished, three teammates confirmed it — and two of them would work with you again.",
+        "colors": [
+          {
+            "name": "Canvas",
+            "hex": "#FFF8F0",
+            "role": "background"
+          },
+          {
+            "name": "Ink",
+            "hex": "#2A2118",
+            "role": "text"
+          },
+          {
+            "name": "Mark",
+            "hex": "#1F6F5C",
+            "role": "accent"
+          }
+        ],
+        "typography": [
+          {
+            "role": "headings",
+            "family": "Fraunces",
+            "rationale": "Keeps the human warmth at the top of the page."
+          },
+          {
+            "role": "body",
+            "family": "IBM Plex Mono",
+            "rationale": "The record itself stays monospaced and exact."
+          }
+        ],
+        "imagery": [
+          "Screenshots of the record itself, never stock photos of students laughing",
+          "Close crops of handwriting, stamps and signatures"
+        ],
+        "composition": [
+          "Left-aligned rows, generous line spacing, no centred hero text",
+          "Rules and dividers instead of cards and shadows"
+        ],
+        "audience_perception": "Serious and slightly institutional — reassuring to someone who has been let down, cold to someone looking for friends.",
+        "risks": [
+          "Can feel like a credit score for people",
+          "Little warmth to attract students who have not yet been burned"
+        ],
+        "opportunities": [
+          "The only student brand that looks like evidence rather than marketing",
+          "Ages well: the record gets more valuable every term"
+        ],
+        "obvious_ideas_rejected": [
+          "A friendly campus-blue app with rounded corners — the default student-product look.",
+          "A trust-badge and five-star world — the marketplace pattern, which turns classmates into ratings."
+        ]
+      },
+      "merge_note": "Kept the factual record from The Ledger as the core, and took Crew Room's voice and palette so it reads as a room rather than a database. Dropped the dark interface."
+    }
+  ]
+}
